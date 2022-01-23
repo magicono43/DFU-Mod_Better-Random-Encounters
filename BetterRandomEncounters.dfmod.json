@@ -4,7 +4,7 @@
     "ModAuthor": "Kirk.O",
     "ContactInfo": "kirkoliveri@gmail.com",
     "DFUnity_Version": "0.13.4",
-    "ModDescription": "Adds Blank.",
+    "ModDescription": "Adds Entirely Script Based Random Encounters System To Daggerfall.",
     "GUID": "93883f8a-9aaf-4938-8fb9-351bcbe58bdc",
     "Files": [
         "Assets/Game/Mods/DFU-Mod_Jewelry-Additions/Scripts/ItemRing.cs",
