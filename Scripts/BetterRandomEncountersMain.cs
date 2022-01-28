@@ -27,12 +27,20 @@ namespace BetterRandomEncounters
     {
         static Mod mod;
 
+        Camera mainCamera;
+        int playerLayerMask = 0;
+        bool castPending = false;
+        [NonSerialized] DaggerfallEntityBehaviour enemyEntityBehaviour = null;
+
         [Invoke(StateManager.StateTypes.Start, 0)]
         public static void Init(InitParams initParams)
         {
             mod = initParams.Mod;
             var go = new GameObject(mod.Title);
             go.AddComponent<BetterRandomEncountersMain>();
+
+
+            go.AddComponent<BREWork>();
         }
 
         void Awake()
@@ -54,6 +62,74 @@ namespace BetterRandomEncounters
         void Start()
         {
             RegisterJACommands();
+            mainCamera = GameManager.Instance.MainCamera;
+            playerLayerMask = ~(1 << LayerMask.NameToLayer("Player"));
+        }
+
+        private void Update()
+        {
+            if (mainCamera == null)
+                return;
+
+            // Do nothing further if player has spell ready to cast as activate button is now used to fire spell
+            // The exception is a readied touch spell where player can activate doors, etc.
+            // Touch spells only fire once a target entity is in range
+            bool touchCastPending = false;
+            if (GameManager.Instance.PlayerEffectManager)
+            {
+                // Handle pending spell cast
+                if (GameManager.Instance.PlayerEffectManager.HasReadySpell)
+                {
+                    // Exclude touch spells from this check
+                    DaggerfallWorkshop.Game.MagicAndEffects.EntityEffectBundle spell = GameManager.Instance.PlayerEffectManager.ReadySpell;
+                    if (spell.Settings.TargetType != DaggerfallWorkshop.Game.MagicAndEffects.TargetTypes.ByTouch)
+                    {
+                        castPending = true;
+                        return;
+                    }
+                    else
+                    {
+                        touchCastPending = true;
+                    }
+                }
+
+                // Prevents last spell cast click from falling through to normal click handling this frame
+                if (castPending)
+                {
+                    castPending = false;
+                    return;
+                }
+            }
+
+            if (InputManager.Instance.ActionComplete(InputManager.Actions.ActivateCenterObject))
+            {
+                float ActivationDistance = 128 * MeshReader.GlobalScale;
+
+                // Fire ray into scene from active mouse cursor or camera
+                Ray ray = new Ray();
+
+                // Ray from camera crosshair position
+                ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
+
+                // Test ray against scene
+                RaycastHit hit;
+                bool hitSomething = Physics.Raycast(ray, out hit, ActivationDistance, playerLayerMask);
+                if (hitSomething)
+                {
+                    // Avoid non-action interactions while a Touch cast is readied
+                    if (!touchCastPending)
+                    {
+                        // Check for mobile enemy hit
+                        DaggerfallEntityBehaviour mobileEnemyBehaviour;
+                        if (BREWork.MobileEnemyCheck(hit, out mobileEnemyBehaviour))
+                        {
+                            BRECustomObject bRECustomObject;
+                            if (BREWork.BRECustObjCheck(mobileEnemyBehaviour, out bRECustomObject))
+                                BREWork.ExecuteBRECustObj(mobileEnemyBehaviour, bRECustomObject);
+                        }
+                    }
+                }
+            }
         }
 
         public static void BetterRandomEncountersLoot_OnEnemyDeath(object sender, EventArgs e) // Populates enemy loot upon their death.

@@ -5,9 +5,12 @@
     "ContactInfo": "kirkoliveri@gmail.com",
     "DFUnity_Version": "0.13.4",
     "ModDescription": "Adds Entirely Script Based Random Encounters System To Daggerfall.",
-    "GUID": "17f8c0e2-0489-4133-9f2d-7f020494b36b",
+    "GUID": "64f6e3ba-7656-446a-acfc-b56275b4d9ec",
     "Files": [
-        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BetterRandomEncountersMain.cs"
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRETextTokenHolder.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRECustomObject.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BetterRandomEncountersMain.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BREWork.cs"
     ],
     "Dependencies": [
         {
