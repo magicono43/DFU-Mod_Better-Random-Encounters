@@ -1,13 +1,12 @@
-// Project:         Daggerfall Tools For Unity
-// Copyright:       Copyright (C) 2009-2021 Daggerfall Workshop
-// Web Site:        http://www.dfworkshop.net
+// Project:         BetterRandomEncounters mod for Daggerfall Unity (http://www.dfworkshop.net)
+// Copyright:       Copyright (C) 2022 Kirk.O
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
-// Source Code:     https://github.com/Interkarma/daggerfall-unity
-// Original Author: Gavin Clayton (interkarma@dfworkshop.net)
-// Contributors:    
-// 
-// Notes:
-//
+// Author:          Kirk.O
+// Created On: 	    1/22/2022, 8:45 PM
+// Last Edit:		1/22/2022, 8:45 PM
+// Version:			1.00
+// Special Thanks:  Hazelnut, Ralzar, Badluckburt, Kab the Bird Ranger, JohnDoom
+// Modifier:	
 
 using System;
 using UnityEngine;
@@ -19,6 +18,7 @@ using FullSerializer;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop;
 using DaggerfallConnect.Arena2;
+using DaggerfallWorkshop.Game.Serialization;
 
 namespace BetterRandomEncounters
 {
@@ -39,13 +39,13 @@ namespace BetterRandomEncounters
 
         TextFile.Token[] greetingText;
         TextFile.Token[] additionalText;
+        TextFile.Token[] aggroText;
 
         bool hasGreeting = false;
         bool greetingShown = false;
         bool hasMoreText = false;
-
-        bool wasClicked = false;
-        bool wasAttacked = false;
+        bool hasAggroText = false;
+        bool aggroTextShown = false;
 
         #endregion
 
@@ -90,6 +90,12 @@ namespace BetterRandomEncounters
             set { additionalText = value; }
         }
 
+        public TextFile.Token[] AggroText
+        {
+            get { return aggroText; }
+            set { aggroText = value; }
+        }
+
         public bool HasGreeting
         {
             get { return hasGreeting; }
@@ -108,29 +114,51 @@ namespace BetterRandomEncounters
             set { hasMoreText = value; }
         }
 
-        public bool WasClicked
+        public bool HasAggroText
         {
-            get { return wasClicked; }
-            set { wasClicked = value; }
+            get { return hasAggroText; }
+            set { hasAggroText = value; }
         }
 
-        public bool WasAttacked
+        public bool AggroTextShown
         {
-            get { return wasAttacked; }
-            set { wasAttacked = value; }
+            get { return aggroTextShown; }
+            set { aggroTextShown = value; }
         }
 
         #endregion
 
         #region Public Methods
 
-        
+
 
         #endregion
 
         #region Private Methods
 
+        private void Update()
+        {
+            if (SaveLoadManager.Instance.LoadInProgress)
+                return;
 
+            if (GameManager.IsGamePaused)
+                return;
+
+            if (hasAggroText)
+            {
+                if (!aggroTextShown)
+                {
+                    EnemyMotor motor = GetComponent<EnemyMotor>();
+                    if (motor != null && motor.IsHostile)
+                    {
+                        BREWork.PopRegularText(AggroText);
+                        aggroTextShown = true;
+                        hasGreeting = false;
+                        HasMoreText = false;
+                    }
+                }
+            }
+        }
 
         #endregion
     }

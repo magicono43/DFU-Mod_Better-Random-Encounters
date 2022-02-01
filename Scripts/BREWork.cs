@@ -5,7 +5,7 @@
 // Created On: 	    1/22/2022, 8:45 PM
 // Last Edit:		1/22/2022, 8:45 PM
 // Version:			1.00
-// Special Thanks:  Hazelnut, Ralzar
+// Special Thanks:  Hazelnut, Ralzar, Badluckburt, Kab the Bird Ranger, JohnDoom
 // Modifier:			
 
 using System;
@@ -46,6 +46,9 @@ namespace BetterRandomEncounters
                 gameStarted = true;
 
             if (SaveLoadManager.Instance.LoadInProgress)
+                return;
+
+            if (GameManager.IsGamePaused)
                 return;
 
             if (playerEntity.CurrentHealth <= 0)
@@ -110,7 +113,8 @@ namespace BetterRandomEncounters
                         //if (UnityEngine.Random.Range(0, 11) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
                         if (1 == 1)
                         {
-                            RollGoodLocationDayEncounter();
+                            if (!RollGoodLocationDayEncounter()) { return false; }
+                            else { return true; }
                         }
                         else if (UnityEngine.Random.Range(0, 26) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
@@ -137,22 +141,28 @@ namespace BetterRandomEncounters
                     {
                         // Wilderness during day
 
-                        if (UnityEngine.Random.Range(0, 11) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
+                        //if (UnityEngine.Random.Range(0, 11) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
+                        if (1 == 1)
                         {
-                            RollGoodWildernessDayEncounter();
+                            if (!RollGoodWildernessDayEncounter()) { return false; }
+                            else { return true; }
                         }
+                        //else if (1 == 1)
                         else if (UnityEngine.Random.Range(0, 26) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
-                            RollBadWildernessDayEncounter();
+                            if (!RollBadWildernessDayEncounter()) { return false; }
+                            else { return true; }
                         }
                     }
                     else
                     {
                         // Wilderness at night
 
-                        if (UnityEngine.Random.Range(0, 26) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
+                        //if (UnityEngine.Random.Range(0, 26) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
+                        if (1 == 1)
                         {
-                            RollGoodWildernessNightEncounter();
+                            if (!RollGoodWildernessNightEncounter()) { return false; }
+                            else { return true; }
                         }
                         else if (UnityEngine.Random.Range(0, 11) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
@@ -180,53 +190,35 @@ namespace BetterRandomEncounters
 
         #region Work Methods
 
-        public void RollGoodLocationDayEncounter()
+        public bool RollGoodLocationDayEncounter()
         {
             //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
             latestEncounterIndex = PickOneOf(1);
-            TextFile.Token[] tokens = null;
 
             switch (latestEncounterIndex)
             {
                 case 1:
-                    DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
-                    ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
-                    tokens = BREText.PilgrimageText(1);
-                    PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
-                    // Figure out if I might be able to somehow make these "foe" objects clickable like in a quest to say something or do something, or if I will have to do that in the quest system.
-
-                    //GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(Vector3.zero, MobileTypes.Healer, 1, MobileReactions.Passive);
-                    GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, MobileTypes.Healer, 1, MobileReactions.Passive);
-                    mobile[0].AddComponent<BRECustomObject>();
-                    BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
-                    bRECustomObject.GreetingText = BREText.PilgrimageText(2); // Place-holder text token
-                    bRECustomObject.AdditionalText = BREText.PilgrimageText(3); // Place-holder text token
-                    bRECustomObject.HasGreeting = true;
-                    bRECustomObject.HasMoreText = true;
-                    mobile[0].transform.LookAt(mobile[0].transform.position + (mobile[0].transform.position - player.transform.position));
-                    mobile[0].SetActive(true);
-                    //GameObject spawner = GameObjectHelper.CreateFoeSpawner(false, MobileTypes.Healer, 1, minDistance: 10, maxDistance: 25, null, true); // May need to change if I just want "passive"
-                    break;
+                    return false;
                 case 2:
-                    break;
+                    return false;
                 case 3:
-                    break;
+                    return false;
                 case 4:
-                    break;
+                    return false;
                 case 5:
-                    break;
+                    return false;
                 case 6:
-                    break;
+                    return false;
                 case 7:
-                    break;
+                    return false;
                 case 8:
-                    break;
+                    return false;
                 case 9:
-                    break;
+                    return false;
                 case 10:
-                    break;
+                    return false;
                 default:
-                    break;
+                    return false;
             }
         }
 
@@ -245,19 +237,138 @@ namespace BetterRandomEncounters
 
         }
 
-        public void RollGoodWildernessDayEncounter()
+        public bool RollGoodWildernessDayEncounter()
         {
+            //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+            latestEncounterIndex = PickOneOf(1, 2, 3, 4);
+            MobileTypes soloMob = MobileTypes.Rat;
+            GameObject mobile = null;
 
+            switch (latestEncounterIndex)
+            {
+                case 1: // Encounter a lone random class during the daytime that is initially passive to the player, all doing their own different things depending on the class, etc.
+                    if (GameManager.Instance.PlayerEntity.IsResting) { return false; } // Basically thinking, don't interrupt resting for most "passive" encounters like this one.
+                    soloMob = (MobileTypes)PickOneOf(132, 140, 134, 137, 142, 145);
+                    SimpleEncounterTextInitiate("Lone_" + soloMob.ToString());
+                    mobile = CreateSingleEnemy("Lone_" + soloMob.ToString(), soloMob, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 2: // Encounter an alchemist that may allow you to buy a selection of potions they have made/have on them at the moment, maybe change variety depending on their class.
+                    if (GameManager.Instance.PlayerEntity.IsResting) { return false; }
+                    soloMob = (MobileTypes)PickOneOf(128, 131, 132, 133); // Need to make more logic for this encounter, such as creating potions and then being able to buy them, etc.
+                    SimpleEncounterTextInitiate("Lone_Alchemist");
+                    mobile = CreateSingleEnemy("Lone_Alchemist", soloMob, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 3: // Encounter a lone random class that appears to be doing physical training, most likely in preperation to join the local/regional army/military/guard whatever.
+                    if (GameManager.Instance.PlayerEntity.IsResting) { return false; }
+                    soloMob = (MobileTypes)PickOneOf(130, 141, 144, 145);
+                    SimpleEncounterTextInitiate("Lone_Trainee");
+                    mobile = CreateSingleEnemy("Lone_Trainee", soloMob, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 4: // Encounter a lone random mostly magic using class that appears to be casting various spells, likely training/trying to hone their magical abilities.
+                    if (GameManager.Instance.PlayerEntity.IsResting) { return false; }
+                    soloMob = (MobileTypes)PickOneOf(128, 129, 130, 131); // Need more logic to have casting sounding/visual particles eminating from the NPC, to seem like they are casting spells.
+                    SimpleEncounterTextInitiate("Lone_Training_Mage");
+                    mobile = CreateSingleEnemy("Lone_Training_Mage", soloMob, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 5:
+                    return false;
+                case 6:
+                    return false;
+                case 7:
+                    return false;
+                case 8:
+                    return false;
+                case 9:
+                    return false;
+                case 10:
+                    return false;
+                default:
+                    return false;
+            }
         }
 
-        public void RollBadWildernessDayEncounter()
+        public bool RollBadWildernessDayEncounter()
         {
+            //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+            latestEncounterIndex = PickOneOf(1, 2, 3, 4);
+            MobileTypes soloMob = MobileTypes.Rat;
+            GameObject mobile = null;
 
+            switch (latestEncounterIndex)
+            {
+                case 1: // Encounter some lone outdoor animal/creature that is hopefully appropriate to the climate of the surrounding area the player is currently in.
+                    soloMob = (MobileTypes)PickOneOf(0, 3, 4, 5, 6, 20); // Possibly take out small vermine like rats and bats and keep those for "multi-spawn" encounters, maybe.
+                    SimpleEncounterTextInitiate("Lone_Beast");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 2: // Encounter a creature of nature that has been disturbed by your proximity/intrusion of it's territory/grove whatever.
+                    soloMob = (MobileTypes)PickOneOf(2, 10); // Just Spriggan and Nymph for now I guess.
+                    SimpleEncounterTextInitiate("Lone_Nature_Guard");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 3: // Encounter a lone humanoid monster type of enemy that would make sense for the outdoor environment to be seen more in the daylight most likely.
+                    soloMob = (MobileTypes)PickOneOf(7, 8, 13, 16);
+                    SimpleEncounterTextInitiate("Lone_Humanoid_Monster");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 4: // Encounter a lone atronach, likely the creation of an irresponsible or possibly even malicious wizard or mage set loose onto the world.
+                    soloMob = (MobileTypes)PickOneOf(35, 36, 37, 38);
+                    SimpleEncounterTextInitiate("Lone_Atronach");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 5:
+                    return false;
+                case 6:
+                    return false;
+                default:
+                    return false;
+            }
         }
 
-        public void RollGoodWildernessNightEncounter()
+        public bool RollGoodWildernessNightEncounter()
         {
+            //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+            latestEncounterIndex = PickOneOf(1, 2, 3, 4);
+            MobileTypes soloMob = MobileTypes.Rat;
+            GameObject mobile = null;
 
+            switch (latestEncounterIndex)
+            {
+                case 1: // Encounter a lone random class during the night that is initially passive to the player but might become hostile if pushed, all doing their own different things.
+                    if (GameManager.Instance.PlayerEntity.IsResting) { return false; }
+                    soloMob = (MobileTypes)PickOneOf(133, 135, 136, 138, 139); // Needs more logic for the times where the class will become hostile if talked too multiple times or something else.
+                    SimpleEncounterTextInitiate("Lone_" + soloMob.ToString());
+                    mobile = CreateSingleEnemy("Lone_" + soloMob.ToString(), soloMob, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 2: // Encounter a lone non-hostile vampire just doing their traveling under the protection of the night, can talk to them.
+                    if (GameManager.Instance.PlayerEntity.IsResting) { return false; }
+                    soloMob = (MobileTypes)PickOneOf(28, 30); // Need to make more logic for this encounter, such as creating potions and then being able to buy them, etc.
+                    SimpleEncounterTextInitiate("Lone_Nice_Vampire");
+                    mobile = CreateSingleEnemy("Lone_Nice_Vampire", soloMob, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         public void RollBadWildernessNightEncounter()
@@ -276,6 +387,33 @@ namespace BetterRandomEncounters
             textBox.SetTextTokens(tokens);
             textBox.ClickAnywhereToClose = true;
             textBox.Show();
+        }
+
+        public GameObject CreateSingleEnemy(string eventName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
+        {
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            mobile[0].AddComponent<BRECustomObject>();
+            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+
+            if (eventName != "") // Basically for spawning single non-verbal enemies sort of things, even if the event does have a proper name for the initiation part.
+            {
+                if (hasGreet) { bRECustomObject.GreetingText = BREText.EncounterTextFinder(eventName, "Greet"); bRECustomObject.HasGreeting = true; }
+                if (hasAdd) { bRECustomObject.AdditionalText = BREText.EncounterTextFinder(eventName, "Add"); bRECustomObject.HasMoreText = true; }
+                if (hasAggro) { bRECustomObject.AggroText = BREText.EncounterTextFinder(eventName, "Aggro"); bRECustomObject.HasAggroText = true; }
+            }
+            
+            return mobile[0];
+        }
+
+        public void SimpleEncounterTextInitiate(string eventName)
+        {
+            TextFile.Token[] tokens = null;
+            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+
+            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
+            tokens = BREText.EncounterTextFinder(eventName);
+
+            PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
         }
 
         // Check if raycast hit a mobile enemy
@@ -303,7 +441,6 @@ namespace BetterRandomEncounters
                     break;
                 case PlayerActivateModes.Grab:
                 case PlayerActivateModes.Talk:
-                    // Do the stuff that I want BRECustomObject to do with my mod after the enemy has been created and had this object attached to them, in most cases have them say something, etc.
                     BRETalk(custObject);
                     break;
                 case PlayerActivateModes.Steal:

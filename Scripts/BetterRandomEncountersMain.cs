@@ -5,7 +5,7 @@
 // Created On: 	    1/22/2022, 8:45 PM
 // Last Edit:		1/22/2022, 8:45 PM
 // Version:			1.00
-// Special Thanks:  Hazelnut, Ralzar
+// Special Thanks:  Hazelnut, Ralzar, Badluckburt, Kab the Bird Ranger, JohnDoom
 // Modifier:			
 
 using System;
@@ -41,6 +41,7 @@ namespace BetterRandomEncounters
 
 
             go.AddComponent<BREWork>();
+            go.AddComponent<BRECustomObject>();
         }
 
         void Awake()
@@ -69,6 +70,9 @@ namespace BetterRandomEncounters
         private void Update()
         {
             if (mainCamera == null)
+                return;
+
+            if (GameManager.IsGamePaused)
                 return;
 
             // Do nothing further if player has spell ready to cast as activate button is now used to fire spell
