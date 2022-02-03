@@ -26,6 +26,7 @@ using DaggerfallWorkshop.Game.Formulas;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallConnect.Arena2;
 using BetterRandomEncounters;
+using System.Linq;
 
 namespace BetterRandomEncounters
 {
@@ -95,12 +96,19 @@ namespace BetterRandomEncounters
             if (!timeForSpawn)
                 return false;
 
+            DFRegion regionData = GameManager.Instance.PlayerGPS.CurrentRegion;
+
             // Spawns when player is outside
             if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside)
             {
                 uint timeOfDay = Minutes % 1440; // 1440 minutes in a day
                 if (GameManager.Instance.PlayerGPS.IsPlayerInLocationRect)
                 {
+                    DFLocation locationData = GameManager.Instance.PlayerGPS.CurrentLocation;
+                    DFRegion.DungeonTypes dungeonType = DFRegion.DungeonTypes.NoDungeon;
+                    if (locationData.HasDungeon)
+                        dungeonType = regionData.MapTable[locationData.LocationIndex].DungeonType; // Will have to test this later, but should work in giving current location dungeon type, I think.
+
                     if (timeOfDay >= 360 && timeOfDay <= 1080)
                     {
                         // In a location area during day
@@ -109,6 +117,13 @@ namespace BetterRandomEncounters
                         // if roll successful than choose the type of encounter that will occur.
                         // if it is some sort of enemy encounter than probably pop some dialogue about it then use "CreateFoeSpawner" in some way.
                         // Etc.
+
+                        if (locationData.HasDungeon && (dungeonType != DFRegion.DungeonTypes.NoDungeon || regionData.MapTable[locationData.LocationIndex].LocationType != DFRegion.LocationTypes.TownCity))
+                        {
+                            RollGoodDayDungeonExteriorEncounters(dungeonType);
+
+                            RollBadDayDungeonExteriorEncounters(dungeonType);
+                        }
 
                         //if (UnityEngine.Random.Range(0, 11) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
                         if (1 == 1)
@@ -124,6 +139,13 @@ namespace BetterRandomEncounters
                     else
                     {
                         // In a location area at night
+
+                        if (locationData.HasDungeon && (dungeonType != DFRegion.DungeonTypes.NoDungeon || regionData.MapTable[locationData.LocationIndex].LocationType != DFRegion.LocationTypes.TownCity))
+                        {
+                            RollGoodNightDungeonExteriorEncounters(dungeonType);
+
+                            RollBadNightDungeonExteriorEncounters(dungeonType);
+                        }
 
                         if (UnityEngine.Random.Range(0, 26) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
                         {
@@ -164,9 +186,11 @@ namespace BetterRandomEncounters
                             if (!RollGoodWildernessNightEncounter()) { return false; }
                             else { return true; }
                         }
+                        //else if (1 == 1)
                         else if (UnityEngine.Random.Range(0, 11) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
-                            RollBadWildernessNightEncounter();
+                            if (!RollBadWildernessNightEncounter()) { return false; }
+                            else { return true; }
                         }
                     }
                 }
@@ -189,6 +213,95 @@ namespace BetterRandomEncounters
         }
 
         #region Work Methods
+
+        public bool RollGoodDayDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
+        {
+            ChooseDungeonExteriorEncounter(dungeonType, 0);
+
+            return false;
+        }
+
+        public bool RollBadDayDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
+        {
+            ChooseDungeonExteriorEncounter(dungeonType, 1);
+
+            return false;
+        }
+
+        public bool RollGoodNightDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
+        {
+            ChooseDungeonExteriorEncounter(dungeonType, 2);
+
+            return false;
+        }
+
+        public bool RollBadNightDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
+        {
+            ChooseDungeonExteriorEncounter(dungeonType, 3);
+
+            return false;
+        }
+
+        public void ChooseDungeonExteriorEncounter (DFRegion.DungeonTypes dungeonType, int eventType)
+        {
+            int mainEnemy = -1;
+
+            switch (dungeonType)
+            {
+                case DFRegion.DungeonTypes.Crypt: mainEnemy = PickOneOf(0, 3, 15, 17, 18, 19, 23, 28, 30, 32, 33, 135, 136, 138, 139); break;
+                case DFRegion.DungeonTypes.OrcStronghold: mainEnemy = PickOneOf(0, 7, 12, 21, 24); break;
+                case DFRegion.DungeonTypes.HumanStronghold: mainEnemy = PickOneOf(0, 128, 129, 130, 131, 132, 133, 134, 140, 141, 144, 145); break;
+                case DFRegion.DungeonTypes.Prison: mainEnemy = PickOneOf(0, 3, 7, 135, 136, 137, 138, 139, 143); break;
+                case DFRegion.DungeonTypes.DesecratedTemple: mainEnemy = PickOneOf(0, 1, 3, 18, 22, 23, 25, 26, 27, 29, 31, 132, 140); break;
+                case DFRegion.DungeonTypes.Mine: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 16, 20, 28, 36, 135, 136, 138); break;
+                case DFRegion.DungeonTypes.NaturalCave: mainEnemy = PickOneOf(0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 20, 21, 28, 32, 34, 133, 135, 136, 138, 142, 143); break;
+                case DFRegion.DungeonTypes.Coven: mainEnemy = PickOneOf(0, 1, 3, 10, 13, 15, 17, 18, 19, 22, 23, 25, 26, 27, 29, 31, 32, 33, 35, 36, 37, 38, 128, 129, 130, 131, 133); break;
+                case DFRegion.DungeonTypes.VampireHaunt: mainEnemy = PickOneOf(0, 3, 15, 17, 18, 19, 23, 28, 30, 32, 33, 133, 139); break;
+                case DFRegion.DungeonTypes.Laboratory: mainEnemy = PickOneOf(0, 1, 3, 9, 13, 14, 17, 22, 32, 33, 35, 36, 37, 38, 128, 129, 130, 131, 133); break;
+                case DFRegion.DungeonTypes.HarpyNest: mainEnemy = PickOneOf(0, 1, 3, 9, 13, 14, 17, 22, 32, 33, 35, 36, 37, 38, 128, 129, 130, 131, 133); break;
+                case DFRegion.DungeonTypes.RuinedCastle: mainEnemy = PickOneOf(0, 3, 6, 7, 8, 9, 12, 14, 15, 16, 17, 19, 20, 21, 22, 24, 28, 30, 32, 33, 34, 135, 136, 138, 139, 141, 144, 145); break;
+                case DFRegion.DungeonTypes.SpiderNest: mainEnemy = PickOneOf(0, 1, 2, 3, 6, 15, 20, 32, 33, 135, 136, 138, 139); break;
+                case DFRegion.DungeonTypes.GiantStronghold: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 8, 12, 16, 20, 21, 22, 24); break;
+                case DFRegion.DungeonTypes.DragonsDen: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 16, 20, 21, 22, 24, 26, 27, 31, 34, 35, 128, 129, 130, 131, 135, 136, 138, 143, 144, 145); break;
+                case DFRegion.DungeonTypes.BarbarianStronghold: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 8, 9, 10, 14, 16, 20, 134, 136, 137, 138, 142, 143, 144); break;
+                case DFRegion.DungeonTypes.VolcanicCaves: mainEnemy = PickOneOf(1, 15, 22, 26, 27, 29, 31, 32, 33, 34, 35, 36, 128, 131); break;
+                case DFRegion.DungeonTypes.ScorpionNest: mainEnemy = PickOneOf(0, 1, 2, 3, 6, 15, 20, 32, 33, 135, 136, 138, 139); break;
+                case DFRegion.DungeonTypes.Cemetery: mainEnemy = PickOneOf(0, 3, 6, 15, 17, 18, 19, 23, 28, 30, 32, 33, 135, 136, 138, 139); break;
+                default: return;
+            }
+
+            if (eventType == 0)
+                DoThing((MobileTypes)mainEnemy);
+            else if (eventType == 1)
+                DoThing2();
+            else if (eventType == 2)
+                DoThing3();
+            else
+                DoThing4();
+        }
+
+        public void DoThing (MobileTypes enemyType) // Just for testing right now.
+        {
+            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            GameObject mobile = null;
+
+            if (eventScale == 0)
+            {
+                if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                {
+                    SimpleEncounterTextInitiate("Lone_" + enemyType.ToString());
+                    mobile = CreateSingleEnemy("Lone_" + enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+            }
+            else if (eventScale == 1)
+                return;
+            else if (eventScale == 2)
+                return;
+            else if (eventScale == 3)
+                return;
+        }
 
         public bool RollGoodLocationDayEncounter()
         {
@@ -360,7 +473,7 @@ namespace BetterRandomEncounters
                     return true;
                 case 2: // Encounter a lone non-hostile vampire just doing their traveling under the protection of the night, can talk to them.
                     if (GameManager.Instance.PlayerEntity.IsResting) { return false; }
-                    soloMob = (MobileTypes)PickOneOf(28, 30); // Need to make more logic for this encounter, such as creating potions and then being able to buy them, etc.
+                    soloMob = (MobileTypes)PickOneOf(28, 30);
                     SimpleEncounterTextInitiate("Lone_Nice_Vampire");
                     mobile = CreateSingleEnemy("Lone_Nice_Vampire", soloMob, MobileReactions.Passive, true, true, true);
                     mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
@@ -371,14 +484,82 @@ namespace BetterRandomEncounters
             }
         }
 
-        public void RollBadWildernessNightEncounter()
+        public bool RollBadWildernessNightEncounter()
         {
+            //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+            latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7);
+            MobileTypes soloMob = MobileTypes.Rat;
+            GameObject mobile = null;
 
+            switch (latestEncounterIndex)
+            {
+                case 1: // Encounter some lone outdoor animal/creature that is hopefully appropriate to the climate of the surrounding area the player is currently in.
+                    soloMob = (MobileTypes)PickOneOf(0, 3, 4, 5, 6, 20); // Possibly take out small vermine like rats and bats and keep those for "multi-spawn" encounters, maybe.
+                    SimpleEncounterTextInitiate("Lone_Beast");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 2: // Encounter a creature of nature that has been disturbed by your proximity/intrusion of it's territory/grove whatever.
+                    soloMob = (MobileTypes)PickOneOf(2, 10); // Just Spriggan and Nymph for now I guess.
+                    SimpleEncounterTextInitiate("Lone_Nature_Guard");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 3: // Encounter a lone atronach, likely the creation of an irresponsible or possibly even malicious wizard or mage set loose onto the world.
+                    soloMob = (MobileTypes)PickOneOf(35, 36, 37, 38);
+                    SimpleEncounterTextInitiate("Lone_Atronach");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 4: // Encounter a lone "lesser" undead creature, possibly distrubed a shallow grave or from a wayward necromancer/mage.
+                    soloMob = (MobileTypes)PickOneOf(15, 17, 19);
+                    SimpleEncounterTextInitiate("Lone_Lesser_Undead");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 5: // Encounter a lone wandering/disturbed spirit undead enemy.
+                    soloMob = (MobileTypes)PickOneOf(18, 23);
+                    SimpleEncounterTextInitiate("Lone_Angry_Spirit");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 6: // Encounter a lone hostile blood-thirsty lesser vampire enemy.
+                    soloMob = (MobileTypes)PickOneOf(28);
+                    SimpleEncounterTextInitiate("Lone_Lesser_Vampire");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                case 7: // Encounter a lone hostile werebeast enemy.
+                    soloMob = (MobileTypes)PickOneOf(9, 14);
+                    SimpleEncounterTextInitiate("Lone_Werebeast");
+                    mobile = CreateSingleEnemy("", soloMob);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         public static int PickOneOf(params int[] values) // Pango provided assistance in making this much cleaner way of doing the random value choice part, awesome.
         {
             return values[UnityEngine.Random.Range(0, values.Length)];
+        }
+
+        public static bool CheckArrayForValue(int num, int[] values)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (num == values[i])
+                    return true;
+            }
+            return false;
         }
 
         public static void PopRegularText(TextFile.Token[] tokens)
