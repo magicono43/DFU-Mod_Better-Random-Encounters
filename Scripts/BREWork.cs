@@ -33,6 +33,7 @@ namespace BetterRandomEncounters
     public class BREWork : MonoBehaviour
     {
         private bool gameStarted = false;
+        public bool tryEventPlacement = false;
         public int latestEncounterIndex = 0;
         private uint lastGameMinutes = 0;         // Being tracked in order to perform updates based on changes in the current game minute
         PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
@@ -68,13 +69,14 @@ namespace BetterRandomEncounters
                 {
                     // Catch up time and break if something spawns. Don't spawn encounters while player is on ship.
                     if (!GameManager.Instance.TransportManager.IsOnShip() &&
-                        ModdedEnemySpawn(l + lastGameMinutes + 1))
-                        break;
-
-                    // Confirm regionData is available
-                    if (playerEntity.RegionData == null || playerEntity.RegionData.Length == 0)
+                        ModdedEventSpawnCheck(l + lastGameMinutes + 1))
                         break;
                 }
+            }
+
+            if (tryEventPlacement)
+            {
+                // Do enemy spawning logic.
             }
 
             lastGameMinutes = gameMinutes;
@@ -84,7 +86,7 @@ namespace BetterRandomEncounters
                 playerEntity.PreventEnemySpawns = false;
         }
 
-        public bool ModdedEnemySpawn(uint Minutes)
+        public bool ModdedEventSpawnCheck(uint Minutes)
         {
             // Define minimum distance from player based on spawn locations
             const int minDungeonDistance = 8;
@@ -97,6 +99,7 @@ namespace BetterRandomEncounters
                 return false;
 
             DFRegion regionData = GameManager.Instance.PlayerGPS.CurrentRegion;
+            MapsFile.Climates climate = (MapsFile.Climates)GameManager.Instance.PlayerGPS.CurrentClimateIndex;
 
             // Spawns when player is outside
             if (!GameManager.Instance.PlayerEnterExit.IsPlayerInside)
@@ -106,6 +109,7 @@ namespace BetterRandomEncounters
                 {
                     DFLocation locationData = GameManager.Instance.PlayerGPS.CurrentLocation;
                     DFRegion.DungeonTypes dungeonType = DFRegion.DungeonTypes.NoDungeon;
+                    DFRegion.LocationTypes locationType = regionData.MapTable[locationData.LocationIndex].LocationType;
                     if (locationData.HasDungeon)
                         dungeonType = regionData.MapTable[locationData.LocationIndex].DungeonType; // Will have to test this later, but should work in giving current location dungeon type, I think.
 
@@ -120,20 +124,21 @@ namespace BetterRandomEncounters
 
                         if (locationData.HasDungeon && (dungeonType != DFRegion.DungeonTypes.NoDungeon || regionData.MapTable[locationData.LocationIndex].LocationType != DFRegion.LocationTypes.TownCity))
                         {
-                            RollGoodDayDungeonExteriorEncounters(dungeonType);
+                            if (UnityEngine.Random.Range(0, 11) == 0)
+                                ChooseDungeonExteriorEncounter(dungeonType, climate, 0);
 
-                            RollBadDayDungeonExteriorEncounters(dungeonType);
+                            if (UnityEngine.Random.Range(0, 26) == 0)
+                                ChooseDungeonExteriorEncounter(dungeonType, climate, 1);
                         }
 
                         //if (UnityEngine.Random.Range(0, 11) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
                         if (1 == 1)
                         {
-                            if (!RollGoodLocationDayEncounter()) { return false; }
-                            else { return true; }
+                            ChooseLocationExteriorEncounter(locationType, climate, 0);
                         }
                         else if (UnityEngine.Random.Range(0, 26) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
-                            RollBadLocationDayEncounter();
+                            ChooseLocationExteriorEncounter(locationType, climate, 1);
                         }
                     }
                     else
@@ -142,18 +147,20 @@ namespace BetterRandomEncounters
 
                         if (locationData.HasDungeon && (dungeonType != DFRegion.DungeonTypes.NoDungeon || regionData.MapTable[locationData.LocationIndex].LocationType != DFRegion.LocationTypes.TownCity))
                         {
-                            RollGoodNightDungeonExteriorEncounters(dungeonType);
+                            if (UnityEngine.Random.Range(0, 11) == 0)
+                                ChooseDungeonExteriorEncounter(dungeonType, climate, 2);
 
-                            RollBadNightDungeonExteriorEncounters(dungeonType);
+                            if (UnityEngine.Random.Range(0, 26) == 0)
+                                ChooseDungeonExteriorEncounter(dungeonType, climate, 3);
                         }
 
                         if (UnityEngine.Random.Range(0, 26) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
                         {
-                            RollGoodLocationNightEncounter();
+                            ChooseLocationExteriorEncounter(locationType, climate, 2);
                         }
                         else if (UnityEngine.Random.Range(0, 11) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
-                            RollBadLocationNightEncounter();
+                            ChooseLocationExteriorEncounter(locationType, climate, 3);
                         }
                     }
                 }
@@ -166,14 +173,12 @@ namespace BetterRandomEncounters
                         //if (UnityEngine.Random.Range(0, 11) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
                         if (1 == 1)
                         {
-                            if (!RollGoodWildernessDayEncounter()) { return false; }
-                            else { return true; }
+                            ChooseWildernessEncounter(climate, 0);
                         }
                         //else if (1 == 1)
                         else if (UnityEngine.Random.Range(0, 26) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
-                            if (!RollBadWildernessDayEncounter()) { return false; }
-                            else { return true; }
+                            ChooseWildernessEncounter(climate, 1);
                         }
                     }
                     else
@@ -183,14 +188,12 @@ namespace BetterRandomEncounters
                         //if (UnityEngine.Random.Range(0, 26) == 0) // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
                         if (1 == 1)
                         {
-                            if (!RollGoodWildernessNightEncounter()) { return false; }
-                            else { return true; }
+                            ChooseWildernessEncounter(climate, 2);
                         }
                         //else if (1 == 1)
                         else if (UnityEngine.Random.Range(0, 11) == 0) // if good encounter fails, roll for a "bad" counter? If neither succeed than no encounter happens this time around?
                         {
-                            if (!RollBadWildernessNightEncounter()) { return false; }
-                            else { return true; }
+                            ChooseWildernessEncounter(climate, 3);
                         }
                     }
                 }
@@ -202,10 +205,14 @@ namespace BetterRandomEncounters
                 // Spawns when player is inside a dungeon
                 if (GameManager.Instance.PlayerEnterExit.IsPlayerInsideDungeon)
                 {
-                    if (playerEntity.IsResting)
-                    {
+                    DFLocation locationData = GameManager.Instance.PlayerGPS.CurrentLocation;
+                    DFRegion.DungeonTypes dungeonType = regionData.MapTable[locationData.LocationIndex].DungeonType;
 
-                    }
+                    if (UnityEngine.Random.Range(0, 26) == 0)
+                        ChooseDungeonInteriorEncounter(dungeonType, climate, 0);
+
+                    if (UnityEngine.Random.Range(0, 11) == 0)
+                        ChooseDungeonInteriorEncounter(dungeonType, climate, 1);
                 }
             }
 
@@ -214,35 +221,7 @@ namespace BetterRandomEncounters
 
         #region Work Methods
 
-        public bool RollGoodDayDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
-        {
-            ChooseDungeonExteriorEncounter(dungeonType, 0);
-
-            return false;
-        }
-
-        public bool RollBadDayDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
-        {
-            ChooseDungeonExteriorEncounter(dungeonType, 1);
-
-            return false;
-        }
-
-        public bool RollGoodNightDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
-        {
-            ChooseDungeonExteriorEncounter(dungeonType, 2);
-
-            return false;
-        }
-
-        public bool RollBadNightDungeonExteriorEncounters(DFRegion.DungeonTypes dungeonType)
-        {
-            ChooseDungeonExteriorEncounter(dungeonType, 3);
-
-            return false;
-        }
-
-        public void ChooseDungeonExteriorEncounter (DFRegion.DungeonTypes dungeonType, int eventType)
+        public void ChooseDungeonExteriorEncounter (DFRegion.DungeonTypes dungeonType, MapsFile.Climates climate, int eventType)
         {
             int mainEnemy = -1;
 
@@ -270,87 +249,449 @@ namespace BetterRandomEncounters
                 default: return;
             }
 
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+                return;
+
             if (eventType == 0)
-                DoThing((MobileTypes)mainEnemy);
+                CreateGoodDayEvent((MobileTypes)mainEnemy);
             else if (eventType == 1)
-                DoThing2();
+                CreateBadDayEvent((MobileTypes)mainEnemy);
             else if (eventType == 2)
-                DoThing3();
+                CreateGoodNightEvent((MobileTypes)mainEnemy);
             else
-                DoThing4();
+                CreateBadNightEvent((MobileTypes)mainEnemy);
         }
 
-        public void DoThing (MobileTypes enemyType) // Just for testing right now.
+        public void ChooseLocationExteriorEncounter(DFRegion.LocationTypes locationType, MapsFile.Climates climate, int eventType)
+        {
+            int mainEnemy = -1;
+
+            switch (locationType) // Will have to edit these values, but just place-holder for the time being.
+            {
+                case DFRegion.LocationTypes.TownCity:
+                case DFRegion.LocationTypes.TownHamlet:
+                case DFRegion.LocationTypes.TownVillage:
+                case DFRegion.LocationTypes.HomeFarms:
+                case DFRegion.LocationTypes.ReligionTemple:
+                case DFRegion.LocationTypes.Tavern:
+                case DFRegion.LocationTypes.HomeWealthy:
+                case DFRegion.LocationTypes.ReligionCult:
+                case DFRegion.LocationTypes.HomePoor:
+                case DFRegion.LocationTypes.Coven:
+                    mainEnemy = PickOneOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145);
+                    break;
+                default: return;
+            }
+
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+                return;
+
+            if (eventType == 0)
+                CreateGoodDayEvent((MobileTypes)mainEnemy);
+            else if (eventType == 1)
+                CreateBadDayEvent((MobileTypes)mainEnemy);
+            else if (eventType == 2)
+                CreateGoodNightEvent((MobileTypes)mainEnemy);
+            else
+                CreateBadNightEvent((MobileTypes)mainEnemy);
+        }
+
+        public void ChooseWildernessEncounter(MapsFile.Climates climate, int eventType)
+        {
+            int mainEnemy = -1;
+
+            mainEnemy = PickOneOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145);
+
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+                return;
+
+            if (eventType == 0)
+                CreateGoodDayEvent((MobileTypes)mainEnemy);
+            else if (eventType == 1)
+                CreateBadDayEvent((MobileTypes)mainEnemy);
+            else if (eventType == 2)
+                CreateGoodNightEvent((MobileTypes)mainEnemy);
+            else
+                CreateBadNightEvent((MobileTypes)mainEnemy);
+        }
+
+        public void ChooseDungeonInteriorEncounter(DFRegion.DungeonTypes dungeonType, MapsFile.Climates climate, int eventType)
+        {
+            int mainEnemy = -1;
+
+            switch (dungeonType)
+            {
+                case DFRegion.DungeonTypes.Crypt: mainEnemy = PickOneOf(0, 3, 15, 17, 18, 19, 23, 28, 30, 32, 33, 135, 136, 138, 139); break;
+                case DFRegion.DungeonTypes.OrcStronghold: mainEnemy = PickOneOf(0, 7, 12, 21, 24); break;
+                case DFRegion.DungeonTypes.HumanStronghold: mainEnemy = PickOneOf(0, 128, 129, 130, 131, 132, 133, 134, 140, 141, 144, 145); break;
+                case DFRegion.DungeonTypes.Prison: mainEnemy = PickOneOf(0, 3, 7, 135, 136, 137, 138, 139, 143); break;
+                case DFRegion.DungeonTypes.DesecratedTemple: mainEnemy = PickOneOf(0, 1, 3, 18, 22, 23, 25, 26, 27, 29, 31, 132, 140); break;
+                case DFRegion.DungeonTypes.Mine: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 16, 20, 28, 36, 135, 136, 138); break;
+                case DFRegion.DungeonTypes.NaturalCave: mainEnemy = PickOneOf(0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 16, 20, 21, 28, 32, 34, 133, 135, 136, 138, 142, 143); break;
+                case DFRegion.DungeonTypes.Coven: mainEnemy = PickOneOf(0, 1, 3, 10, 13, 15, 17, 18, 19, 22, 23, 25, 26, 27, 29, 31, 32, 33, 35, 36, 37, 38, 128, 129, 130, 131, 133); break;
+                case DFRegion.DungeonTypes.VampireHaunt: mainEnemy = PickOneOf(0, 3, 15, 17, 18, 19, 23, 28, 30, 32, 33, 133, 139); break;
+                case DFRegion.DungeonTypes.Laboratory: mainEnemy = PickOneOf(0, 1, 3, 9, 13, 14, 17, 22, 32, 33, 35, 36, 37, 38, 128, 129, 130, 131, 133); break;
+                case DFRegion.DungeonTypes.HarpyNest: mainEnemy = PickOneOf(0, 1, 3, 9, 13, 14, 17, 22, 32, 33, 35, 36, 37, 38, 128, 129, 130, 131, 133); break;
+                case DFRegion.DungeonTypes.RuinedCastle: mainEnemy = PickOneOf(0, 3, 6, 7, 8, 9, 12, 14, 15, 16, 17, 19, 20, 21, 22, 24, 28, 30, 32, 33, 34, 135, 136, 138, 139, 141, 144, 145); break;
+                case DFRegion.DungeonTypes.SpiderNest: mainEnemy = PickOneOf(0, 1, 2, 3, 6, 15, 20, 32, 33, 135, 136, 138, 139); break;
+                case DFRegion.DungeonTypes.GiantStronghold: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 8, 12, 16, 20, 21, 22, 24); break;
+                case DFRegion.DungeonTypes.DragonsDen: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 16, 20, 21, 22, 24, 26, 27, 31, 34, 35, 128, 129, 130, 131, 135, 136, 138, 143, 144, 145); break;
+                case DFRegion.DungeonTypes.BarbarianStronghold: mainEnemy = PickOneOf(0, 3, 4, 5, 6, 7, 8, 9, 10, 14, 16, 20, 134, 136, 137, 138, 142, 143, 144); break;
+                case DFRegion.DungeonTypes.VolcanicCaves: mainEnemy = PickOneOf(1, 15, 22, 26, 27, 29, 31, 32, 33, 34, 35, 36, 128, 131); break;
+                case DFRegion.DungeonTypes.ScorpionNest: mainEnemy = PickOneOf(0, 1, 2, 3, 6, 15, 20, 32, 33, 135, 136, 138, 139); break;
+                case DFRegion.DungeonTypes.Cemetery: mainEnemy = PickOneOf(0, 3, 6, 15, 17, 18, 19, 23, 28, 30, 32, 33, 135, 136, 138, 139); break;
+                default: return;
+            }
+
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+                return;
+
+            if (eventType == 0)
+                CreateGoodInteriorEvent((MobileTypes)mainEnemy);
+            else
+                CreateBadInteriorEvent((MobileTypes)mainEnemy);
+        }
+
+        public bool ClimateSpawnExceptions(MapsFile.Climates climate, MobileTypes enemy)
+        {
+            switch (climate)
+            {
+                case MapsFile.Climates.Ocean: if (CheckArrayForValue((int)enemy, new int[] { 0, 2, 4, 5, 6, 20, 26, 35 })) { return true; } else { return false; }
+                case MapsFile.Climates.Desert: if (CheckArrayForValue((int)enemy, new int[] { 4, 6, 10, 25, 38 })) { return true; } else { return false; }
+                case MapsFile.Climates.Desert2: if (CheckArrayForValue((int)enemy, new int[] { 4, 6, 10, 25, 38 })) { return true; } else { return false; }
+                case MapsFile.Climates.Mountain: if (CheckArrayForValue((int)enemy, new int[] { 2, 8, 20 })) { return true; } else { return false; }
+                case MapsFile.Climates.Rainforest: if (CheckArrayForValue((int)enemy, new int[] { 4 })) { return true; } else { return false; }
+                case MapsFile.Climates.Swamp: if (CheckArrayForValue((int)enemy, new int[] { 4, 5, 20, 26, 35 })) { return true; } else { return false; }
+                case MapsFile.Climates.Subtropical: if (CheckArrayForValue((int)enemy, new int[] { 25, 38 })) { return true; } else { return false; }
+                case MapsFile.Climates.MountainWoods: if (CheckArrayForValue((int)enemy, new int[] { 8, 20 })) { return true; } else { return false; }
+                case MapsFile.Climates.Woodlands: if (CheckArrayForValue((int)enemy, new int[] { 20 })) { return true; } else { return false; }
+                case MapsFile.Climates.HauntedWoodlands: if (CheckArrayForValue((int)enemy, new int[] { 20 })) { return true; } else { return false; }
+                default: return false;
+            }
+        }
+
+        public int[] ClimateSpawnExceptions(MapsFile.Climates climate, List<int> checkList)
+        {
+            List<int> resultEnemies = checkList;
+            int[] exceptions;
+
+            switch (climate)
+            {
+                case MapsFile.Climates.Ocean: exceptions = new int[] { 0, 2, 4, 5, 6, 20, 26, 35 }; break;
+                case MapsFile.Climates.Desert: exceptions = new int[] { 4, 6, 10, 25, 38 }; break;
+                case MapsFile.Climates.Desert2: exceptions = new int[] { 4, 6, 10, 25, 38 }; break;
+                case MapsFile.Climates.Mountain: exceptions = new int[] { 2, 8, 20 }; break;
+                case MapsFile.Climates.Rainforest: exceptions = new int[] { 4 }; break;
+                case MapsFile.Climates.Swamp: exceptions = new int[] { 4, 5, 20, 26, 35 }; break;
+                case MapsFile.Climates.Subtropical: exceptions = new int[] { 25, 38 }; break;
+                case MapsFile.Climates.MountainWoods: exceptions = new int[] { 8, 20 }; break;
+                case MapsFile.Climates.Woodlands: exceptions = new int[] { 20 }; break;
+                case MapsFile.Climates.HauntedWoodlands: exceptions = new int[] { 20 }; break;
+                default: exceptions = new int[] {}; break;
+            }
+
+            for (int i = 0; i < checkList.Count; i++)
+            {
+                if (CheckArrayForValue(checkList[i], exceptions))
+                {
+                    resultEnemies.RemoveAt(i);
+                }
+            }
+
+            return resultEnemies.ToArray();
+        }
+
+        public void CreateGoodDayEvent(MobileTypes enemyType)
         {
             int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
             GameObject mobile = null;
 
             if (eventScale == 0)
             {
-                if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                if (CheckArrayForValue((int)enemyType, new int[] { 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
                 {
-                    SimpleEncounterTextInitiate("Lone_" + enemyType.ToString());
-                    mobile = CreateSingleEnemy("Lone_" + enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
                     mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
                     mobile.SetActive(true);
                 }
             }
             else if (eventScale == 1)
-                return;
-            else if (eventScale == 2)
-                return;
+            {
+                if (CheckArrayForValue((int)enemyType, new int[] { 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                }
+            }
+            else if (eventScale == 2) // Work on adding the "large group" encounters framework, which is likely just going to be the small group but with more for-loop cycles. Also transform change for small groups, don't forget that.
+                if (CheckArrayForValue((int)enemyType, new int[] { 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                }
             else if (eventScale == 3)
                 return;
         }
 
-        public bool RollGoodLocationDayEncounter()
+        public void CreateBadDayEvent(MobileTypes enemyType)
         {
-            //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-            latestEncounterIndex = PickOneOf(1);
+            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            GameObject mobile = null;
 
-            switch (latestEncounterIndex)
+            if (eventScale == 0)
             {
-                case 1:
-                    return false;
-                case 2:
-                    return false;
-                case 3:
-                    return false;
-                case 4:
-                    return false;
-                case 5:
-                    return false;
-                case 6:
-                    return false;
-                case 7:
-                    return false;
-                case 8:
-                    return false;
-                case 9:
-                    return false;
-                case 10:
-                    return false;
-                default:
-                    return false;
+                if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Hostile", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29, 31, 32, 33, 34, 35, 36, 37, 38 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Hostile", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
             }
+            else if (eventScale == 1)
+                if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29, 31, 32, 33, 34, 35, 36, 37, 38 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+            else if (eventScale == 2)
+                if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29, 31, 32, 33, 34, 35, 36, 37, 38 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+            else if (eventScale == 3)
+                return;
         }
 
-        public void RollBadLocationDayEncounter()
+        public void CreateGoodNightEvent(MobileTypes enemyType)
         {
+            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            GameObject mobile = null;
 
+            if (eventScale == 0)
+            {
+                if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 133, 134, 135, 136, 138, 139, 142, 143 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 9, 10, 14, 15, 17, 18, 19, 22, 23, 25, 26, 27, 29, 31, 35, 36, 37, 38 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+            }
+            else if (eventScale == 1)
+                if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 133, 134, 135, 136, 138, 139, 142, 143 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 9, 10, 14, 15, 17, 18, 19, 22, 23, 25, 26, 27, 29, 31, 35, 36, 37, 38 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                }
+            else if (eventScale == 2)
+                if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 133, 134, 135, 136, 138, 139, 142, 143 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 9, 10, 14, 15, 17, 18, 19, 22, 23, 25, 26, 27, 29, 31, 35, 36, 37, 38 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                }
+            else if (eventScale == 3)
+                return;
         }
 
-        public void RollGoodLocationNightEncounter()
+        public void CreateBadNightEvent(MobileTypes enemyType)
         {
+            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            GameObject mobile = null;
 
+            if (eventScale == 0)
+            {
+                if (CheckArrayForValue((int)enemyType, new int[] { 133, 134, 135, 136, 138, 139, 142, 143 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Hostile", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+                if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 6, 9, 10, 14, 15, 17, 18, 19, 20, 22, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Hostile", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+            }
+            else if (eventScale == 1)
+                if (CheckArrayForValue((int)enemyType, new int[] { 133, 134, 135, 136, 138, 139, 142, 143 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 6, 9, 10, 14, 15, 17, 18, 19, 20, 22, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+            else if (eventScale == 2)
+                if (CheckArrayForValue((int)enemyType, new int[] { 133, 134, 135, 136, 138, 139, 142, 143 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 6, 9, 10, 14, 15, 17, 18, 19, 20, 22, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+            else if (eventScale == 3)
+                return;
         }
 
-        public void RollBadLocationNightEncounter()
+        public void CreateGoodInteriorEvent(MobileTypes enemyType)
         {
+            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            GameObject mobile = null;
 
+            if (eventScale == 0)
+            {
+                if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+            }
+            else if (eventScale == 1)
+                if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                }
+            else if (eventScale == 2)
+                if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
+                }
+            else if (eventScale == 3)
+                return;
         }
 
-        public bool RollGoodWildernessDayEncounter()
+        public void CreateBadInteriorEvent(MobileTypes enemyType)
+        {
+            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            GameObject mobile = null;
+
+            if (eventScale == 0)
+            {
+                if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Hostile", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 6, 9, 10, 14, 15, 17, 18, 19, 20, 22, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38 }))
+                {
+                    LoneEncounterTextInitiate("Lone_Hostile", enemyType.ToString(), (int)enemyType);
+                    mobile = CreateSingleEnemy("Lone_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                    mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
+                    mobile.SetActive(true);
+                }
+            }
+            else if (eventScale == 1)
+                if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 6, 9, 10, 14, 15, 17, 18, 19, 20, 22, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38 }))
+                {
+                    SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+            else if (eventScale == 2)
+                if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+                else if (CheckArrayForValue((int)enemyType, new int[] { 0, 1, 2, 3, 6, 9, 10, 14, 15, 17, 18, 19, 20, 22, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 35, 36, 37, 38 }))
+                {
+                    LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
+                    CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
+                }
+            else if (eventScale == 3)
+                return;
+        }
+
+        /*public bool RollGoodWildernessDayEncounter()
         {
             //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
             latestEncounterIndex = PickOneOf(1, 2, 3, 4);
@@ -391,18 +732,6 @@ namespace BetterRandomEncounters
                     mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
                     mobile.SetActive(true);
                     return true;
-                case 5:
-                    return false;
-                case 6:
-                    return false;
-                case 7:
-                    return false;
-                case 8:
-                    return false;
-                case 9:
-                    return false;
-                case 10:
-                    return false;
                 default:
                     return false;
             }
@@ -445,10 +774,6 @@ namespace BetterRandomEncounters
                     mobile.transform.LookAt(mobile.transform.position + (mobile.transform.position - player.transform.position));
                     mobile.SetActive(true);
                     return true;
-                case 5:
-                    return false;
-                case 6:
-                    return false;
                 default:
                     return false;
             }
@@ -545,7 +870,7 @@ namespace BetterRandomEncounters
                 default:
                     return false;
             }
-        }
+        }*/
 
         public static int PickOneOf(params int[] values) // Pango provided assistance in making this much cleaner way of doing the random value choice part, awesome.
         {
@@ -564,13 +889,15 @@ namespace BetterRandomEncounters
 
         public static void PopRegularText(TextFile.Token[] tokens)
         {
+            if (tokens[0].text == "") { return; } // Basically there for the "AggroText" that is shown when an enemy becomes hostile, but for those that should have none but will still pass this method.
+
             DaggerfallMessageBox textBox = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
             textBox.SetTextTokens(tokens);
             textBox.ClickAnywhereToClose = true;
             textBox.Show();
         }
 
-        public GameObject CreateSingleEnemy(string eventName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
+        public GameObject CreateSingleEnemy(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
         {
             GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
             mobile[0].AddComponent<BRECustomObject>();
@@ -578,23 +905,279 @@ namespace BetterRandomEncounters
 
             if (eventName != "") // Basically for spawning single non-verbal enemies sort of things, even if the event does have a proper name for the initiation part.
             {
-                if (hasGreet) { bRECustomObject.GreetingText = BREText.EncounterTextFinder(eventName, "Greet"); bRECustomObject.HasGreeting = true; }
-                if (hasAdd) { bRECustomObject.AdditionalText = BREText.EncounterTextFinder(eventName, "Add"); bRECustomObject.HasMoreText = true; }
-                if (hasAggro) { bRECustomObject.AggroText = BREText.EncounterTextFinder(eventName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
             }
             
             return mobile[0];
         }
 
-        public void SimpleEncounterTextInitiate(string eventName)
+        public void LoneEncounterTextInitiate(string eventName, string enemyName, int enemyID)
         {
             TextFile.Token[] tokens = null;
             DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
 
             ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
-            tokens = BREText.EncounterTextFinder(eventName);
+            tokens = BREText.LoneEncounterTextFinder(eventName, enemyName, enemyID);
 
             PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
+        }
+
+        public void CreateSmallEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
+        {
+            ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
+            int size = UnityEngine.Random.Range(3, 5);
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+            EnemyEntity entity = behaviour.Entity as EnemyEntity;
+            MobileTeams team = entity.Team;
+            mobile[0].AddComponent<BRECustomObject>();
+            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+            bRECustomObject.LinkedAlliesID = alliedID; // Guess try and work on the transform part next for the groups of enemies. Then probably actually test this and see if everything is working at all. 
+             // Might have to add another part to the update for event spawns like "trying to position encounter" or something, then uses this time to find a valid position to place things. 
+            for (int i = 0; i < size; i++) // Based on how many enemies plan to be spawning in a specific encounter.
+            {
+                if (i == 0) // For the leader specifically
+                {
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName+"_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+                else // For the followers of the leader
+                {
+                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
+                    mobile[0].AddComponent<BRECustomObject>();
+                    bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+                    behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+                    entity = behaviour.Entity as EnemyEntity;
+                    entity.Team = team;
+                    bRECustomObject.LinkedAlliesID = alliedID;
+
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+
+                mobile[0].transform.LookAt(mobile[0].transform.position + (mobile[0].transform.position - player.transform.position));
+                mobile[0].SetActive(true);
+            }
+        }
+
+        public void SmallGroupEncounterTextInitiate(string eventName, string enemyName, int enemyID)
+        {
+            TextFile.Token[] tokens = null;
+            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+
+            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
+            tokens = BREText.SmallGroupEncounterTextFinder(eventName, enemyName, enemyID);
+
+            PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
+        }
+
+        public void CreateLargeEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
+        {
+            ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
+            int size = UnityEngine.Random.Range(6, 10);
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+            EnemyEntity entity = behaviour.Entity as EnemyEntity;
+            MobileTeams team = entity.Team;
+            mobile[0].AddComponent<BRECustomObject>();
+            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+            bRECustomObject.LinkedAlliesID = alliedID;
+
+            for (int i = 0; i < size; i++) // Based on how many enemies plan to be spawning in a specific encounter.
+            {
+                if (i == 0) // For the leader specifically
+                {
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+                else // For the followers of the leader
+                {
+                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
+                    mobile[0].AddComponent<BRECustomObject>();
+                    bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+                    behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+                    entity = behaviour.Entity as EnemyEntity;
+                    entity.Team = team;
+                    bRECustomObject.LinkedAlliesID = alliedID;
+
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+
+                mobile[0].transform.LookAt(mobile[0].transform.position + (mobile[0].transform.position - player.transform.position));
+                mobile[0].SetActive(true);
+            }
+        }
+
+        public void LargeGroupEncounterTextInitiate(string eventName, string enemyName, int enemyID)
+        {
+            TextFile.Token[] tokens = null;
+            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+
+            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
+            tokens = BREText.LargeGroupEncounterTextFinder(eventName, enemyName, enemyID);
+
+            PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
+        }
+
+        public MobileTypes ChooseEnemyFollowers(MobileTypes leader) // Meant for determining encounters where multiple enemies are spawned in a similar group.
+        {
+            int follower = 0;
+            List<int> enemyList = new List<int>();
+            int[] humans = { 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 };
+            MapsFile.Climates climate = (MapsFile.Climates)GameManager.Instance.PlayerGPS.CurrentClimateIndex;
+
+            switch (leader)
+            {
+                case MobileTypes.Spriggan: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 2, 3, 4, 5, 6, 10, 20 })); return (MobileTypes)follower;
+                case MobileTypes.Nymph: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 2, 3, 4, 5, 6, 10, 20 })); return (MobileTypes)follower;
+                case MobileTypes.OrcSergeant: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7 })); return (MobileTypes)follower;
+                case MobileTypes.SkeletalWarrior: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17 })); return (MobileTypes)follower;
+                case MobileTypes.Giant: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 4, 16 })); return (MobileTypes)follower;
+                case MobileTypes.Ghost: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18 })); return (MobileTypes)follower;
+                case MobileTypes.Mummy: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17 })); return (MobileTypes)follower;
+                case MobileTypes.OrcShaman: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 12 })); return (MobileTypes)follower;
+                case MobileTypes.Gargoyle: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 16, 22 })); return (MobileTypes)follower;
+                case MobileTypes.Wraith: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23 })); return (MobileTypes)follower;
+                case MobileTypes.OrcWarlord: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 12, 21 })); return (MobileTypes)follower;
+                case MobileTypes.FrostDaedra: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 38 })); return (MobileTypes)follower;
+                case MobileTypes.FireDaedra: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 35 })); return (MobileTypes)follower;
+                case MobileTypes.Daedroth: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 36 })); return (MobileTypes)follower;
+                case MobileTypes.Vampire: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 19, 28, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.DaedraSeducer: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 8, 12, 16, 25, 26, 27, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.VampireAncient: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 19, 28, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.DaedraLord: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 25, 26, 27, 29 })); return (MobileTypes)follower;
+                case MobileTypes.Lich: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23, 35, 36, 37, 38 })); return (MobileTypes)follower;
+                case MobileTypes.AncientLich: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23, 35, 36, 37, 38 })); return (MobileTypes)follower;
+                case MobileTypes.Mage: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 35, 36, 37, 38, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Spellsword: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Battlemage: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Sorcerer: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 35, 36, 37, 38, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Healer:
+                case MobileTypes.Monk: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Nightblade: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 134, 135, 136, 137, 138, 139, 143 })); return (MobileTypes)follower;
+                case MobileTypes.Bard: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.Burglar:
+                case MobileTypes.Rogue:
+                case MobileTypes.Acrobat:
+                case MobileTypes.Thief:
+                case MobileTypes.Assassin:
+                case MobileTypes.Barbarian: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 134, 135, 136, 137, 138, 139, 143 })); return (MobileTypes)follower;
+                case MobileTypes.Archer:
+                case MobileTypes.Warrior:
+                case MobileTypes.Knight: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Ranger: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 3, 4, 5, 6, 20, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                default: return leader;
+            }
+        }
+
+        // Uses raycasts to find next spawn position just outside of player's field of view
+        void PlaceFoeFreely(GameObject[] gameObjects, float minDistance = 5f, float maxDistance = 20f)
+        {
+            const float overlapSphereRadius = 0.65f;
+            const float separationDistance = 1.25f;
+            const float maxFloorDistance = 4f;
+
+            // Must have received a valid array
+            if (gameObjects == null || gameObjects.Length == 0)
+                return;
+
+            // Skip this foe if destroyed (e.g. player left building where pending)
+            if (!gameObjects[pendingFoesSpawned])
+            {
+                pendingFoesSpawned++;
+                return;
+            }
+
+            // Set parent if none specified already
+            if (!gameObjects[pendingFoesSpawned].transform.parent)
+                gameObjects[pendingFoesSpawned].transform.parent = GameObjectHelper.GetBestParent();
+
+            // Get roation of spawn ray
+            Quaternion rotation;
+            if (LineOfSightCheck)
+            {
+                // Try to spawn outside of player's field of view
+                float directionAngle = GameManager.Instance.MainCamera.fieldOfView;
+                directionAngle += UnityEngine.Random.Range(0f, 4f);
+                if (UnityEngine.Random.Range(0f, 1f) > 0.5f)
+                    rotation = Quaternion.Euler(0, -directionAngle, 0);
+                else
+                    rotation = Quaternion.Euler(0, directionAngle, 0);
+            }
+            else
+            {
+                // Don't care about player's field of view (e.g. at rest)
+                rotation = Quaternion.Euler(0, UnityEngine.Random.Range(0, 360), 0);
+            }
+
+            // Get direction vector and create a new ray
+            Vector3 angle = (rotation * Vector3.forward).normalized;
+            Vector3 spawnDirection = GameManager.Instance.PlayerObject.transform.TransformDirection(angle).normalized;
+            Ray ray = new Ray(GameManager.Instance.PlayerObject.transform.position, spawnDirection);
+
+            // Check for a hit
+            Vector3 currentPoint;
+            RaycastHit initialHit;
+            if (Physics.Raycast(ray, out initialHit, maxDistance))
+            {
+                float cos_normal = Vector3.Dot(-spawnDirection, initialHit.normal.normalized);
+                if (cos_normal < 1e-6)
+                    return;
+                float separationForward = separationDistance / cos_normal;
+
+                // Must be greater than minDistance
+                float distanceSlack = initialHit.distance - separationForward - minDistance;
+                if (distanceSlack < 0f)
+                    return;
+
+                // Separate out from hit point
+                float extraDistance = UnityEngine.Random.Range(0f, Mathf.Min(2f, distanceSlack));
+                currentPoint = initialHit.point - spawnDirection * (separationForward + extraDistance);
+            }
+            else
+            {
+                // Player might be in an open area (e.g. outdoors) pick a random point along spawn direction
+                currentPoint = GameManager.Instance.PlayerObject.transform.position + spawnDirection * UnityEngine.Random.Range(minDistance, maxDistance);
+            }
+
+            // Must be able to find a surface below
+            RaycastHit floorHit;
+            ray = new Ray(currentPoint, Vector3.down);
+            if (!Physics.Raycast(ray, out floorHit, maxFloorDistance))
+                return;
+
+            // Ensure this is open space
+            Vector3 testPoint = floorHit.point + Vector3.up * separationDistance;
+            Collider[] colliders = Physics.OverlapSphere(testPoint, overlapSphereRadius);
+            if (colliders.Length > 0)
+                return;
+
+            // This looks like a good spawn position
+            pendingFoeGameObjects[pendingFoesSpawned].transform.position = testPoint;
+            FinalizeFoe(pendingFoeGameObjects[pendingFoesSpawned]);
+            gameObjects[pendingFoesSpawned].transform.LookAt(GameManager.Instance.PlayerObject.transform.position);
+
+            // Increment count
+            pendingFoesSpawned++;
         }
 
         // Check if raycast hit a mobile enemy

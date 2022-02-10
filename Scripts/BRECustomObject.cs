@@ -39,13 +39,14 @@ namespace BetterRandomEncounters
 
         TextFile.Token[] greetingText;
         TextFile.Token[] additionalText;
-        TextFile.Token[] aggroText;
+        TextFile.Token[] aggroText = DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.Nothing, "");
 
         bool hasGreeting = false;
         bool greetingShown = false;
         bool hasMoreText = false;
         bool hasAggroText = false;
         bool aggroTextShown = false;
+        ulong linkedAlliesID = 0;
 
         #endregion
 
@@ -126,6 +127,12 @@ namespace BetterRandomEncounters
             set { aggroTextShown = value; }
         }
 
+        public ulong LinkedAlliesID
+        {
+            get { return linkedAlliesID; }
+            set { linkedAlliesID = value; }
+        }
+
         #endregion
 
         #region Public Methods
@@ -144,17 +151,37 @@ namespace BetterRandomEncounters
             if (GameManager.IsGamePaused)
                 return;
 
-            if (hasAggroText)
+            if (!aggroTextShown) // Removed the "HasAggroText" check before this, otherwise non-talking enemies would not all turn hostile when the player attack one of their other gang members.
             {
-                if (!aggroTextShown)
+                EnemyMotor motor = GetComponent<EnemyMotor>();
+                if (motor != null && motor.IsHostile)
                 {
-                    EnemyMotor motor = GetComponent<EnemyMotor>();
-                    if (motor != null && motor.IsHostile)
+                    BREWork.PopRegularText(AggroText);
+                    aggroTextShown = true;
+                    hasGreeting = false;
+                    hasMoreText = false;
+
+                    BRECustomObject[] gangMembers = FindObjectsOfType<BRECustomObject>(); // Attempt to turn all event "gang members" hostile once one becomes hostile to the player.
+                    if (gangMembers.Length > 1)
                     {
-                        BREWork.PopRegularText(AggroText);
-                        aggroTextShown = true;
-                        hasGreeting = false;
-                        HasMoreText = false;
+                        for (int i = 0; i < gangMembers.Length; i++)
+                        {
+                            if (gangMembers[i].LinkedAlliesID == linkedAlliesID)
+                            {
+                                DaggerfallEntityBehaviour entityBehaviour = gangMembers[i].GetComponent<DaggerfallEntityBehaviour>();
+                                if (entityBehaviour.EntityType == EntityTypes.EnemyMonster || entityBehaviour.EntityType == EntityTypes.EnemyClass)
+                                {
+                                    EnemyMotor enemyMotor = entityBehaviour.GetComponent<EnemyMotor>();
+                                    if (enemyMotor)
+                                    {
+                                        enemyMotor.IsHostile = true;
+                                        gangMembers[i].AggroTextShown = true;
+                                        gangMembers[i].HasGreeting = false;
+                                        gangMembers[i].HasMoreText = false;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
