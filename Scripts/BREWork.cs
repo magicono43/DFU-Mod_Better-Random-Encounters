@@ -41,7 +41,7 @@ namespace BetterRandomEncounters
 
         TextFile.Token[] pendingEventInitialTokens = null;
         public bool tryEventPlacement = false;
-        List<GameObject> pendingEventEnemies;
+        List<GameObject> pendingEventEnemies = new List<GameObject>();
         int enemiesSpawnedIndex = 0;
 
         private void Update()
@@ -78,9 +78,11 @@ namespace BetterRandomEncounters
                 }
             }
 
-            if (tryEventPlacement)
+            if (tryEventPlacement) // The multi-spawn might have something to do with the "PreventEnemySpawns" maybe? Not sure honestly, will need to do more testing to figure it out later.
             {
-                if (pendingEventEnemies.Count == 0) { pendingEventInitialTokens = null; tryEventPlacement = false; pendingEventEnemies = null; enemiesSpawnedIndex = 0; }
+                Debug.Log("Try Event Placement Is Trying To Do Something Right Now!");
+
+                if (pendingEventEnemies == null || pendingEventEnemies.Count == 0) { pendingEventInitialTokens = null; tryEventPlacement = false; pendingEventEnemies = new List<GameObject>(); enemiesSpawnedIndex = 0; }
                 else { TryPlacingEventObjects(); }
 
                 if (enemiesSpawnedIndex >= pendingEventEnemies.Count)
@@ -97,9 +99,9 @@ namespace BetterRandomEncounters
 
                     pendingEventInitialTokens = null;
                     tryEventPlacement = false;
-                    pendingEventEnemies = null; // Not sure if this will delete the spawned enemies or not? Will just have to test out I guess.
                     enemiesSpawnedIndex = 0;
-                }    
+                    pendingEventEnemies = new List<GameObject>(); // Not sure if this will delete the spawned enemies or not? Will just have to test out I guess.
+                }
             }
 
             lastGameMinutes = gameMinutes;
@@ -116,7 +118,7 @@ namespace BetterRandomEncounters
             if (!timeForSpawn)
                 return false;
 
-            if (pendingEventEnemies.Count >= 1 && tryEventPlacement) // Attempt to prevent more encounters from being qued while another is already currently trying to spawn.
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1 && tryEventPlacement) // Attempt to prevent more encounters from being qued while another is already currently trying to spawn.
                 return false;
 
             DFRegion regionData = GameManager.Instance.PlayerGPS.CurrentRegion;
@@ -145,12 +147,12 @@ namespace BetterRandomEncounters
 
                         if (locationData.HasDungeon && (dungeonType != DFRegion.DungeonTypes.NoDungeon || regionData.MapTable[locationData.LocationIndex].LocationType != DFRegion.LocationTypes.TownCity))
                         {
-                            if (UnityEngine.Random.Range(0, 11) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 0); }
+                            if (1 == 1) { ChooseDungeonExteriorEncounter(dungeonType, climate, 0); } // if (UnityEngine.Random.Range(0, 11) == 0)
                             else if (UnityEngine.Random.Range(0, 26) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 1); }
                         }
                         else
                         {
-                            if (UnityEngine.Random.Range(0, 11) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 0); }
+                            if (1 == 1) { ChooseLocationExteriorEncounter(locationType, climate, 0); } // if (UnityEngine.Random.Range(0, 11) == 0)
                             else if (UnityEngine.Random.Range(0, 26) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 1); }
                         }
                     }
@@ -205,7 +207,7 @@ namespace BetterRandomEncounters
                 }
             }
 
-            if (pendingEventEnemies.Count >= 1) { tryEventPlacement = true; return true; } // If event objects are present, flag to attempt spawning any event future update cycles, also return true.
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { tryEventPlacement = true; return true; } // If event objects are present, flag to attempt spawning any event future update cycles, also return true.
             else { return true; } // If no event objects are present, return true but don't flag to attempt spawning any event.
         }
 
@@ -859,7 +861,7 @@ namespace BetterRandomEncounters
 
         public void CreateSingleEnemy(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
         {
-            if (pendingEventEnemies.Count >= 1) { return; }
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
 
             GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
             mobile[0].AddComponent<BRECustomObject>();
@@ -889,7 +891,7 @@ namespace BetterRandomEncounters
 
         public void CreateSmallEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
         {
-            if (pendingEventEnemies.Count >= 1) { return; }
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
 
             ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
             int size = UnityEngine.Random.Range(3, 5);
@@ -949,7 +951,7 @@ namespace BetterRandomEncounters
 
         public void CreateLargeEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
         {
-            if (pendingEventEnemies.Count >= 1) { return; }
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
 
             ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
             int size = UnityEngine.Random.Range(6, 10);
@@ -1064,7 +1066,7 @@ namespace BetterRandomEncounters
             // Define minimum distance from player based on spawn locations. Not sure if these are useful in this case.
             //const int minDungeonDistance = 8;
             //const int minLocationDistance = 10;
-            //const int minWildernessDistance = 10;
+            //const int minWildernessDistance = 10; // Will definitely want to play around with the spawn distance mins and maxes tomorrow and such.
 
             const float overlapSphereRadius = 0.65f;
             const float separationDistance = 1.25f;

@@ -135,11 +135,11 @@ namespace BetterRandomEncounters
                 case "Small_Group_Friendly":
                     return DaggerfallUnity.Instance.TextProvider.CreateTokens(
                     TextFile.Formatting.JustifyCenter,
-                    "");//GetRandomSmallGroupFriendlyEncounterText(enemyName, enemyID));
+                    "WIP");//GetRandomSmallGroupFriendlyEncounterText(enemyName, enemyID));
                 case "Small_Group_Hostile":
                     return DaggerfallUnity.Instance.TextProvider.CreateTokens(
                     TextFile.Formatting.JustifyCenter,
-                    "");//GetRandomSmallGroupHostileEncounterText(enemyName, enemyID));
+                    "WIP");//GetRandomSmallGroupHostileEncounterText(enemyName, enemyID));
                 default:
                     return DaggerfallUnity.Instance.TextProvider.CreateTokens(
                         TextFile.Formatting.JustifyCenter,
@@ -154,11 +154,11 @@ namespace BetterRandomEncounters
                 case "Large_Group_Friendly":
                     return DaggerfallUnity.Instance.TextProvider.CreateTokens(
                     TextFile.Formatting.JustifyCenter,
-                    "");//GetRandomSmallGroupFriendlyEncounterText(enemyName, enemyID));
+                    "WIP");//GetRandomSmallGroupFriendlyEncounterText(enemyName, enemyID));
                 case "Large_Group_Hostile":
                     return DaggerfallUnity.Instance.TextProvider.CreateTokens(
                     TextFile.Formatting.JustifyCenter,
-                    "");//GetRandomSmallGroupHostileEncounterText(enemyName, enemyID));
+                    "WIP");//GetRandomSmallGroupHostileEncounterText(enemyName, enemyID));
                 default:
                     return DaggerfallUnity.Instance.TextProvider.CreateTokens(
                         TextFile.Formatting.JustifyCenter,
