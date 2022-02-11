@@ -47,6 +47,8 @@ namespace BetterRandomEncounters
         bool hasAggroText = false;
         bool aggroTextShown = false;
         ulong linkedAlliesID = 0;
+        bool isGangLeader = false;
+        bool readyToSpawn = false;
 
         #endregion
 
@@ -131,6 +133,18 @@ namespace BetterRandomEncounters
         {
             get { return linkedAlliesID; }
             set { linkedAlliesID = value; }
+        }
+
+        public bool IsGangLeader
+        {
+            get { return isGangLeader; }
+            set { isGangLeader = value; }
+        }
+
+        public bool ReadyToSpawn
+        {
+            get { return readyToSpawn; }
+            set { readyToSpawn = value; }
         }
 
         #endregion

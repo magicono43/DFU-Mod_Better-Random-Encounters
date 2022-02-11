@@ -39,8 +39,10 @@ namespace BetterRandomEncounters
         GameObject player = GameManager.Instance.PlayerObject;
         GameObject[] mobile;
 
+        TextFile.Token[] pendingEventInitialTokens = null;
         public bool tryEventPlacement = false;
         List<GameObject> pendingEventEnemies;
+        int enemiesSpawnedIndex = 0;
 
         private void Update()
         {
@@ -78,9 +80,26 @@ namespace BetterRandomEncounters
 
             if (tryEventPlacement)
             {
-                if (pendingEventEnemies.Count == 0) { tryEventPlacement = false; }
+                if (pendingEventEnemies.Count == 0) { pendingEventInitialTokens = null; tryEventPlacement = false; pendingEventEnemies = null; enemiesSpawnedIndex = 0; }
                 else { TryPlacingEventObjects(); }
-                // Do enemy spawning logic.
+
+                if (enemiesSpawnedIndex >= pendingEventEnemies.Count)
+                {
+                    PopRegularText(pendingEventInitialTokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
+
+                    for (int i = 0; i < pendingEventEnemies.Count; i++)
+                    {
+                        var bREObject = pendingEventEnemies[i].GetComponent<BRECustomObject>();
+
+                        if (bREObject.ReadyToSpawn)
+                            pendingEventEnemies[i].SetActive(true);
+                    }
+
+                    pendingEventInitialTokens = null;
+                    tryEventPlacement = false;
+                    pendingEventEnemies = null; // Not sure if this will delete the spawned enemies or not? Will just have to test out I guess.
+                    enemiesSpawnedIndex = 0;
+                }    
             }
 
             lastGameMinutes = gameMinutes;
@@ -846,6 +865,8 @@ namespace BetterRandomEncounters
             mobile[0].AddComponent<BRECustomObject>();
             BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
 
+            bRECustomObject.IsGangLeader = true;
+
             if (eventName != "") // Basically for spawning single non-verbal enemies sort of things, even if the event does have a proper name for the initiation part.
             {
                 if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
@@ -863,7 +884,7 @@ namespace BetterRandomEncounters
             ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
             tokens = BREText.LoneEncounterTextFinder(eventName, enemyName, enemyID);
 
-            PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
+            pendingEventInitialTokens = tokens;
         }
 
         public void CreateSmallEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
@@ -884,6 +905,8 @@ namespace BetterRandomEncounters
             {
                 if (i == 0) // For the leader specifically
                 {
+                    bRECustomObject.IsGangLeader = true;
+
                     if (eventName != "")
                     {
                         if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName+"_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
@@ -921,7 +944,7 @@ namespace BetterRandomEncounters
             ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
             tokens = BREText.SmallGroupEncounterTextFinder(eventName, enemyName, enemyID);
 
-            PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
+            pendingEventInitialTokens = tokens;
         }
 
         public void CreateLargeEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
@@ -942,6 +965,8 @@ namespace BetterRandomEncounters
             {
                 if (i == 0) // For the leader specifically
                 {
+                    bRECustomObject.IsGangLeader = true;
+
                     if (eventName != "")
                     {
                         if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
@@ -979,7 +1004,7 @@ namespace BetterRandomEncounters
             ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
             tokens = BREText.LargeGroupEncounterTextFinder(eventName, enemyName, enemyID);
 
-            PopRegularText(tokens); // Later on in development, likely make many of these "safe" encounters skippable with a yes/no prompt.
+            pendingEventInitialTokens = tokens;
         }
 
         public MobileTypes ChooseEnemyFollowers(MobileTypes leader) // Meant for determining encounters where multiple enemies are spawned in a similar group.
@@ -1034,54 +1059,45 @@ namespace BetterRandomEncounters
         }
 
         // Uses raycasts to find next spawn position just outside of player's field of view
-        void TryPlacingEventObjects(GameObject[] gameObjects, float minDistance = 5f, float maxDistance = 20f) // Mess with this tomorrow. Remember pending is current a list, not an array, so yeah.
+        void TryPlacingEventObjects(float minDistance = 5f, float maxDistance = 20f) // Mess with this tomorrow. Remember pending is current a list, not an array, so yeah.
         {
             // Define minimum distance from player based on spawn locations. Not sure if these are useful in this case.
-            const int minDungeonDistance = 8;
-            const int minLocationDistance = 10;
-            const int minWildernessDistance = 10;
+            //const int minDungeonDistance = 8;
+            //const int minLocationDistance = 10;
+            //const int minWildernessDistance = 10;
 
             const float overlapSphereRadius = 0.65f;
             const float separationDistance = 1.25f;
             const float maxFloorDistance = 4f;
 
-            // Must have received a valid array
-            if (gameObjects == null || gameObjects.Length == 0)
+            if (enemiesSpawnedIndex >= pendingEventEnemies.Count)
                 return;
 
-            // Skip this foe if destroyed (e.g. player left building where pending)
-            if (!gameObjects[pendingFoesSpawned])
+            // Must have received a valid list
+            if (pendingEventEnemies == null || pendingEventEnemies.Count == 0)
+                return;
+
+            // Skip this foe if destroyed (e.g. player left building where pending). Will definitely have to change this later, to basically cancel entire event if player changes scenes.
+            if (!pendingEventEnemies[enemiesSpawnedIndex])
             {
-                pendingFoesSpawned++;
+                enemiesSpawnedIndex++;
                 return;
             }
 
-            // Set parent if none specified already
-            if (!gameObjects[pendingFoesSpawned].transform.parent)
-                gameObjects[pendingFoesSpawned].transform.parent = GameObjectHelper.GetBestParent();
+            GameObject anchor;
+            BRECustomObject bREObject = pendingEventEnemies[enemiesSpawnedIndex].GetComponent<BRECustomObject>();
+            if (bREObject.IsGangLeader)
+                anchor = GameManager.Instance.PlayerObject; // Will initially use player as the anchor for where to place the leader object for an event, then use the leader to place the rest.
+            else
+                anchor = pendingEventEnemies[0]; // Just assuming for now that the "leader" of the event will always be the first object created or the first index value of this list.
 
             // Get roation of spawn ray
-            Quaternion rotation;
-            if (LineOfSightCheck)
-            {
-                // Try to spawn outside of player's field of view
-                float directionAngle = GameManager.Instance.MainCamera.fieldOfView;
-                directionAngle += UnityEngine.Random.Range(0f, 4f);
-                if (UnityEngine.Random.Range(0f, 1f) > 0.5f)
-                    rotation = Quaternion.Euler(0, -directionAngle, 0);
-                else
-                    rotation = Quaternion.Euler(0, directionAngle, 0);
-            }
-            else
-            {
-                // Don't care about player's field of view (e.g. at rest)
-                rotation = Quaternion.Euler(0, UnityEngine.Random.Range(0, 360), 0);
-            }
+            Quaternion rotation = Quaternion.Euler(0, UnityEngine.Random.Range(0, 360), 0);
 
             // Get direction vector and create a new ray
             Vector3 angle = (rotation * Vector3.forward).normalized;
-            Vector3 spawnDirection = GameManager.Instance.PlayerObject.transform.TransformDirection(angle).normalized;
-            Ray ray = new Ray(GameManager.Instance.PlayerObject.transform.position, spawnDirection);
+            Vector3 spawnDirection = anchor.transform.TransformDirection(angle).normalized;
+            Ray ray = new Ray(anchor.transform.position, spawnDirection);
 
             // Check for a hit
             Vector3 currentPoint;
@@ -1105,7 +1121,7 @@ namespace BetterRandomEncounters
             else
             {
                 // Player might be in an open area (e.g. outdoors) pick a random point along spawn direction
-                currentPoint = GameManager.Instance.PlayerObject.transform.position + spawnDirection * UnityEngine.Random.Range(minDistance, maxDistance);
+                currentPoint = anchor.transform.position + spawnDirection * UnityEngine.Random.Range(minDistance, maxDistance);
             }
 
             // Must be able to find a surface below
@@ -1121,12 +1137,34 @@ namespace BetterRandomEncounters
                 return;
 
             // This looks like a good spawn position
-            pendingFoeGameObjects[pendingFoesSpawned].transform.position = testPoint;
-            FinalizeFoe(pendingFoeGameObjects[pendingFoesSpawned]);
-            gameObjects[pendingFoesSpawned].transform.LookAt(GameManager.Instance.PlayerObject.transform.position);
+            pendingEventEnemies[enemiesSpawnedIndex].transform.position = testPoint;
+            FinalizeFoe(pendingEventEnemies[enemiesSpawnedIndex]);
+            pendingEventEnemies[enemiesSpawnedIndex].transform.LookAt(anchor.transform.position);
 
             // Increment count
-            pendingFoesSpawned++;
+            enemiesSpawnedIndex++;
+        }
+
+        // Fine tunes foe position slightly based on mobility and enables GameObject
+        void FinalizeFoe(GameObject go)
+        {
+            var mobileUnit = go.GetComponentInChildren<MobileUnit>();
+            if (mobileUnit)
+            {
+                // Align ground creatures on surface, raise flying creatures slightly into air
+                if (mobileUnit.Enemy.Behaviour != MobileBehaviour.Flying)
+                    GameObjectHelper.AlignControllerToGround(go.GetComponent<CharacterController>());
+                else
+                    go.transform.localPosition += Vector3.up * 1.5f;
+            }
+            else
+            {
+                // Just align to ground
+                GameObjectHelper.AlignControllerToGround(go.GetComponent<CharacterController>());
+            }
+
+            var bREObject = go.GetComponent<BRECustomObject>();
+            bREObject.ReadyToSpawn = true;
         }
 
         // Check if raycast hit a mobile enemy
