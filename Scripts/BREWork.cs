@@ -44,6 +44,30 @@ namespace BetterRandomEncounters
         List<GameObject> pendingEventEnemies = new List<GameObject>();
         int enemiesSpawnedIndex = 0;
 
+        void Start()
+        {
+            StartGameBehaviour.OnStartGame += BREWork_OnStartGame;
+            SaveLoadManager.OnLoad += BREWork_OnSaveLoad;
+        }
+
+        void BREWork_OnStartGame(object sender, EventArgs e)
+        {
+            lastGameMinutes = 0;
+            pendingEventInitialTokens = null;
+            tryEventPlacement = false;
+            pendingEventEnemies = new List<GameObject>();
+            enemiesSpawnedIndex = 0;
+        }
+
+        void BREWork_OnSaveLoad(SaveData_v1 saveData)
+        {
+            lastGameMinutes = 0;
+            pendingEventInitialTokens = null;
+            tryEventPlacement = false;
+            pendingEventEnemies = new List<GameObject>();
+            enemiesSpawnedIndex = 0;
+        }
+
         private void Update()
         {
             if (!gameStarted && !GameManager.Instance.StateManager.GameInProgress)
@@ -68,6 +92,8 @@ namespace BetterRandomEncounters
 
             if (!playerEntity.PreventEnemySpawns)
             {
+                if (GameManager.Instance.EntityEffectBroker.SyntheticTimeIncrease) { lastGameMinutes = gameMinutes; }
+
                 //Debug.Log((gameMinutes - lastGameMinutes).ToString());
                 for (uint l = 0; l < (gameMinutes - lastGameMinutes); ++l)
                 {
@@ -100,7 +126,7 @@ namespace BetterRandomEncounters
                     pendingEventInitialTokens = null;
                     tryEventPlacement = false;
                     enemiesSpawnedIndex = 0;
-                    pendingEventEnemies = new List<GameObject>(); // Not sure if this will delete the spawned enemies or not? Will just have to test out I guess.
+                    pendingEventEnemies = new List<GameObject>();
                 }
             }
 
@@ -116,6 +142,9 @@ namespace BetterRandomEncounters
             // Do not allow spawns if not enough time has passed
             bool timeForSpawn = (Minutes % 90) == 0; // Will have to test around with this, kind of strange to me at least how it might actually work in practice.
             if (!timeForSpawn)
+                return false;
+
+            if (GameManager.Instance.EntityEffectBroker.SyntheticTimeIncrease) // Attempts to prevent events from immediatley spawning after fast traveling, will have to see if it works or not.
                 return false;
 
             if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1 && tryEventPlacement) // Attempt to prevent more encounters from being qued while another is already currently trying to spawn.
@@ -134,26 +163,21 @@ namespace BetterRandomEncounters
                     DFRegion.DungeonTypes dungeonType = DFRegion.DungeonTypes.NoDungeon;
                     DFRegion.LocationTypes locationType = regionData.MapTable[locationData.LocationIndex].LocationType;
                     if (locationData.HasDungeon)
-                        dungeonType = regionData.MapTable[locationData.LocationIndex].DungeonType; // Will have to test this later, but should work in giving current location dungeon type, I think.
+                        dungeonType = regionData.MapTable[locationData.LocationIndex].DungeonType;
 
                     if (timeOfDay >= 360 && timeOfDay <= 1080)
                     {
                         // In a location area during day
 
-                        // roll for chances of something happening, possibly also modified by the type of location you are in?
-                        // if roll successful than choose the type of encounter that will occur.
-                        // if it is some sort of enemy encounter than probably pop some dialogue about it then use "CreateFoeSpawner" in some way.
-                        // Etc.
-
                         if (locationData.HasDungeon && (dungeonType != DFRegion.DungeonTypes.NoDungeon || regionData.MapTable[locationData.LocationIndex].LocationType != DFRegion.LocationTypes.TownCity))
                         {
-                            if (1 == 1) { ChooseDungeonExteriorEncounter(dungeonType, climate, 0); } // if (UnityEngine.Random.Range(0, 11) == 0)
-                            else if (UnityEngine.Random.Range(0, 26) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 1); }
+                            if (UnityEngine.Random.Range(0, 2) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 0); } // (0, 11) == 0)
+                            else if (UnityEngine.Random.Range(0, 2) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 1); } // (0, 26) == 0)
                         }
                         else
                         {
-                            if (1 == 1) { ChooseLocationExteriorEncounter(locationType, climate, 0); } // if (UnityEngine.Random.Range(0, 11) == 0)
-                            else if (UnityEngine.Random.Range(0, 26) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 1); }
+                            if (UnityEngine.Random.Range(0, 2) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 0); } // (0, 11) == 0)
+                            else if (UnityEngine.Random.Range(0, 2) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 1); } // (0, 26) == 0)
                         }
                     }
                     else
@@ -162,13 +186,13 @@ namespace BetterRandomEncounters
 
                         if (locationData.HasDungeon && (dungeonType != DFRegion.DungeonTypes.NoDungeon || regionData.MapTable[locationData.LocationIndex].LocationType != DFRegion.LocationTypes.TownCity))
                         {
-                            if (UnityEngine.Random.Range(0, 11) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 2); }
-                            else if (UnityEngine.Random.Range(0, 26) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 3); }
+                            if (UnityEngine.Random.Range(0, 2) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 2); } // (0, 26) == 0)
+                            else if (UnityEngine.Random.Range(0, 2) == 0) { ChooseDungeonExteriorEncounter(dungeonType, climate, 3); } // (0, 11) == 0)
                         }
                         else
                         {
-                            if (UnityEngine.Random.Range(0, 26) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 2); }
-                            else if (UnityEngine.Random.Range(0, 11) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 3); }
+                            if (UnityEngine.Random.Range(0, 2) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 2); } // (0, 26) == 0)
+                            else if (UnityEngine.Random.Range(0, 2) == 0) { ChooseLocationExteriorEncounter(locationType, climate, 3); } // (0, 11) == 0)
                         }
                     }
                 }
@@ -179,16 +203,16 @@ namespace BetterRandomEncounters
                         // Wilderness during day
 
                         // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
-                        if (UnityEngine.Random.Range(0, 11) == 0) { ChooseWildernessEncounter(climate, 0); }
-                        else if (UnityEngine.Random.Range(0, 26) == 0) { ChooseWildernessEncounter(climate, 1); }
+                        if (UnityEngine.Random.Range(0, 2) == 0) { ChooseWildernessEncounter(climate, 0); } // (0, 11) == 0)
+                        else if (UnityEngine.Random.Range(0, 2) == 0) { ChooseWildernessEncounter(climate, 1); } // (0, 26) == 0)
                     }
                     else
                     {
                         // Wilderness at night
 
                         // roll odds for a "good" encounter? Have "good" encounters have a higher chance during the day, and the opposite for night generally.
-                        if (UnityEngine.Random.Range(0, 26) == 0) { ChooseWildernessEncounter(climate, 2); }
-                        else if (UnityEngine.Random.Range(0, 11) == 0) { ChooseWildernessEncounter(climate, 3); }
+                        if (UnityEngine.Random.Range(0, 2) == 0) { ChooseWildernessEncounter(climate, 2); } // (0, 26) == 0)
+                        else if (UnityEngine.Random.Range(0, 2) == 0) { ChooseWildernessEncounter(climate, 3); } // (0, 11) == 0)
                     }
                 }
             }
@@ -202,8 +226,8 @@ namespace BetterRandomEncounters
                     DFLocation locationData = GameManager.Instance.PlayerGPS.CurrentLocation;
                     DFRegion.DungeonTypes dungeonType = regionData.MapTable[locationData.LocationIndex].DungeonType;
 
-                    if (UnityEngine.Random.Range(0, 26) == 0) { ChooseDungeonInteriorEncounter(dungeonType, climate, 0); }
-                    else if (UnityEngine.Random.Range(0, 11) == 0) { ChooseDungeonInteriorEncounter(dungeonType, climate, 1); }
+                    if (UnityEngine.Random.Range(0, 2) == 0) { ChooseDungeonInteriorEncounter(dungeonType, climate, 0); } // (0, 26) == 0)
+                    else if (UnityEngine.Random.Range(0, 2) == 0) { ChooseDungeonInteriorEncounter(dungeonType, climate, 1); } // (0, 11) == 0)
                 }
             }
 
@@ -241,7 +265,7 @@ namespace BetterRandomEncounters
                 default: return;
             }
 
-            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy)) // Possibly change this somehow so something new is selected instead of basically aborting the entire event due to enemy type.
                 return;
 
             if (eventType == 0)
@@ -275,7 +299,7 @@ namespace BetterRandomEncounters
                 default: return;
             }
 
-            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy)) // Possibly change this somehow so something new is selected instead of basically aborting the entire event due to enemy type.
                 return;
 
             if (eventType == 0)
@@ -294,7 +318,7 @@ namespace BetterRandomEncounters
 
             mainEnemy = PickOneOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145);
 
-            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy)) // Possibly change this somehow so something new is selected instead of basically aborting the entire event due to enemy type.
                 return;
 
             if (eventType == 0)
@@ -335,7 +359,7 @@ namespace BetterRandomEncounters
                 default: return;
             }
 
-            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy))
+            if (ClimateSpawnExceptions(climate, (MobileTypes)mainEnemy)) // Possibly change this somehow so something new is selected instead of basically aborting the entire event due to enemy type.
                 return;
 
             if (eventType == 0)
@@ -346,45 +370,113 @@ namespace BetterRandomEncounters
 
         public bool ClimateSpawnExceptions(MapsFile.Climates climate, MobileTypes enemy)
         {
+            bool climateCheck = false;
+            bool seasonCheck = false;
+
             switch (climate)
             {
-                case MapsFile.Climates.Ocean: if (CheckArrayForValue((int)enemy, new int[] { 0, 2, 4, 5, 6, 20, 26, 35 })) { return true; } else { return false; }
-                case MapsFile.Climates.Desert: if (CheckArrayForValue((int)enemy, new int[] { 4, 6, 10, 25, 38 })) { return true; } else { return false; }
-                case MapsFile.Climates.Desert2: if (CheckArrayForValue((int)enemy, new int[] { 4, 6, 10, 25, 38 })) { return true; } else { return false; }
-                case MapsFile.Climates.Mountain: if (CheckArrayForValue((int)enemy, new int[] { 2, 8, 20 })) { return true; } else { return false; }
-                case MapsFile.Climates.Rainforest: if (CheckArrayForValue((int)enemy, new int[] { 4 })) { return true; } else { return false; }
-                case MapsFile.Climates.Swamp: if (CheckArrayForValue((int)enemy, new int[] { 4, 5, 20, 26, 35 })) { return true; } else { return false; }
-                case MapsFile.Climates.Subtropical: if (CheckArrayForValue((int)enemy, new int[] { 25, 38 })) { return true; } else { return false; }
-                case MapsFile.Climates.MountainWoods: if (CheckArrayForValue((int)enemy, new int[] { 8, 20 })) { return true; } else { return false; }
-                case MapsFile.Climates.Woodlands: if (CheckArrayForValue((int)enemy, new int[] { 20 })) { return true; } else { return false; }
-                case MapsFile.Climates.HauntedWoodlands: if (CheckArrayForValue((int)enemy, new int[] { 20 })) { return true; } else { return false; }
-                default: return false;
+                case MapsFile.Climates.Ocean: if (CheckArrayForValue((int)enemy, new int[] { 0, 2, 4, 5, 6, 20, 26, 35 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.Desert: if (CheckArrayForValue((int)enemy, new int[] { 4, 6, 10, 25, 38 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.Desert2: if (CheckArrayForValue((int)enemy, new int[] { 4, 6, 10, 25, 38 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.Mountain: if (CheckArrayForValue((int)enemy, new int[] { 2, 8, 20 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.Rainforest: if (CheckArrayForValue((int)enemy, new int[] { 4 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.Swamp: if (CheckArrayForValue((int)enemy, new int[] { 4, 5, 20, 26, 35 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.Subtropical: if (CheckArrayForValue((int)enemy, new int[] { 25, 38 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.MountainWoods: if (CheckArrayForValue((int)enemy, new int[] { 8, 20 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.Woodlands: if (CheckArrayForValue((int)enemy, new int[] { 20 })) { climateCheck = true; break; } else { break; }
+                case MapsFile.Climates.HauntedWoodlands: if (CheckArrayForValue((int)enemy, new int[] { 20 })) { climateCheck = true; break; } else { break; }
+                default: break;
             }
+
+            if (climateCheck) { return true; }
+
+            switch (DaggerfallUnity.Instance.WorldTime.Now.MonthValue)
+            {
+                //Spring
+                case DaggerfallDateTime.Months.FirstSeed:
+                case DaggerfallDateTime.Months.RainsHand:
+                case DaggerfallDateTime.Months.SecondSeed:
+                    break;
+                //Summer
+                case DaggerfallDateTime.Months.Midyear:
+                case DaggerfallDateTime.Months.SunsHeight:
+                case DaggerfallDateTime.Months.LastSeed:
+                    if (CheckArrayForValue((int)enemy, new int[] { 25, 38 })) { seasonCheck = true; break; } else { break; }
+                //Fall
+                case DaggerfallDateTime.Months.Hearthfire:
+                case DaggerfallDateTime.Months.Frostfall:
+                case DaggerfallDateTime.Months.SunsDusk:
+                    break;
+                //Winter
+                case DaggerfallDateTime.Months.EveningStar:
+                case DaggerfallDateTime.Months.MorningStar:
+                case DaggerfallDateTime.Months.SunsDawn:
+                    if (CheckArrayForValue((int)enemy, new int[] { 26, 35 })) { seasonCheck = true; break; } else { break; }
+                default: break;
+            }
+
+            if (seasonCheck) { return true; }
+
+            if (GameManager.Instance.WeatherManager.IsRaining && CheckArrayForValue((int)enemy, new int[] { 6, 20, 26, 35 })) { return true; }
+            else if (GameManager.Instance.WeatherManager.IsSnowing && CheckArrayForValue((int)enemy, new int[] { 6, 20, 26, 35 })) { return true; }
+            else if (GameManager.Instance.WeatherManager.IsStorming && CheckArrayForValue((int)enemy, new int[] { 6, 20, 26, 35 })) { return true; }
+            else { return false; }
         }
 
         public int[] ClimateSpawnExceptions(MapsFile.Climates climate, List<int> checkList)
         {
             List<int> resultEnemies = checkList;
-            int[] exceptions;
+            List<int> exceptions;
 
             switch (climate)
             {
-                case MapsFile.Climates.Ocean: exceptions = new int[] { 0, 2, 4, 5, 6, 20, 26, 35 }; break;
-                case MapsFile.Climates.Desert: exceptions = new int[] { 4, 6, 10, 25, 38 }; break;
-                case MapsFile.Climates.Desert2: exceptions = new int[] { 4, 6, 10, 25, 38 }; break;
-                case MapsFile.Climates.Mountain: exceptions = new int[] { 2, 8, 20 }; break;
-                case MapsFile.Climates.Rainforest: exceptions = new int[] { 4 }; break;
-                case MapsFile.Climates.Swamp: exceptions = new int[] { 4, 5, 20, 26, 35 }; break;
-                case MapsFile.Climates.Subtropical: exceptions = new int[] { 25, 38 }; break;
-                case MapsFile.Climates.MountainWoods: exceptions = new int[] { 8, 20 }; break;
-                case MapsFile.Climates.Woodlands: exceptions = new int[] { 20 }; break;
-                case MapsFile.Climates.HauntedWoodlands: exceptions = new int[] { 20 }; break;
-                default: exceptions = new int[] {}; break;
+                case MapsFile.Climates.Ocean: exceptions = new List<int>() { 0, 2, 4, 5, 6, 20, 26, 35 }; break;
+                case MapsFile.Climates.Desert: exceptions = new List<int>() { 4, 6, 10, 25, 38 }; break;
+                case MapsFile.Climates.Desert2: exceptions = new List<int>() { 4, 6, 10, 25, 38 }; break;
+                case MapsFile.Climates.Mountain: exceptions = new List<int>() { 2, 8, 20 }; break;
+                case MapsFile.Climates.Rainforest: exceptions = new List<int>() { 4 }; break;
+                case MapsFile.Climates.Swamp: exceptions = new List<int>() { 4, 5, 20, 26, 35 }; break;
+                case MapsFile.Climates.Subtropical: exceptions = new List<int>() { 25, 38 }; break;
+                case MapsFile.Climates.MountainWoods: exceptions = new List<int>() { 8, 20 }; break;
+                case MapsFile.Climates.Woodlands: exceptions = new List<int>() { 20 }; break;
+                case MapsFile.Climates.HauntedWoodlands: exceptions = new List<int>() { 20 }; break;
+                default: exceptions = new List<int>() { }; break;
             }
+
+            switch (DaggerfallUnity.Instance.WorldTime.Now.MonthValue)
+            {
+                //Spring
+                case DaggerfallDateTime.Months.FirstSeed:
+                case DaggerfallDateTime.Months.RainsHand:
+                case DaggerfallDateTime.Months.SecondSeed:
+                    break;
+                //Summer
+                case DaggerfallDateTime.Months.Midyear:
+                case DaggerfallDateTime.Months.SunsHeight:
+                case DaggerfallDateTime.Months.LastSeed:
+                    exceptions.Add(25); exceptions.Add(38); break;
+                //Fall
+                case DaggerfallDateTime.Months.Hearthfire:
+                case DaggerfallDateTime.Months.Frostfall:
+                case DaggerfallDateTime.Months.SunsDusk:
+                    break;
+                //Winter
+                case DaggerfallDateTime.Months.EveningStar:
+                case DaggerfallDateTime.Months.MorningStar:
+                case DaggerfallDateTime.Months.SunsDawn:
+                    exceptions.Add(26); exceptions.Add(35); break;
+                default: break;
+            }
+
+            if (GameManager.Instance.WeatherManager.IsRaining ||
+                GameManager.Instance.WeatherManager.IsSnowing ||
+                GameManager.Instance.WeatherManager.IsStorming) { exceptions.Add(6); exceptions.Add(20); exceptions.Add(26); exceptions.Add(35); }
+
+            int[] exceptionsArray = exceptions.ToArray();
 
             for (int i = 0; i < checkList.Count; i++)
             {
-                if (CheckArrayForValue(checkList[i], exceptions))
+                if (CheckArrayForValue(checkList[i], exceptionsArray))
                 {
                     resultEnemies.RemoveAt(i);
                 }
@@ -401,7 +493,7 @@ namespace BetterRandomEncounters
             {
                 if (CheckArrayForValue((int)enemyType, new int[] { 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
                 {
-                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType); // I will have to initiate these later during the spawning process most likely instead of here.
+                    LoneEncounterTextInitiate("Lone_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateSingleEnemy("Lone_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
                 }
                 else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
@@ -414,7 +506,7 @@ namespace BetterRandomEncounters
             {
                 if (CheckArrayForValue((int)enemyType, new int[] { 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
                 {
-                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType); // I will have to initiate these later during the spawning process most likely instead of here.
+                    SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
                 }
                 else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
@@ -423,10 +515,10 @@ namespace BetterRandomEncounters
                     CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
                 }
             }
-            else if (eventScale == 2) // Work on adding the "large group" encounters framework, which is likely just going to be the small group but with more for-loop cycles. Also transform change for small groups, don't forget that.
+            else if (eventScale == 2)
                 if (CheckArrayForValue((int)enemyType, new int[] { 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
                 {
-                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType); // I will have to initiate these later during the spawning process most likely instead of here.
+                    LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, true, true);
                 }
                 else if (CheckArrayForValue((int)enemyType, new int[] { 1, 2, 7, 8, 10, 12, 13, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29, 31, 34, 35, 36, 37, 38 }))
@@ -653,6 +745,346 @@ namespace BetterRandomEncounters
                 return;
         }
 
+        public void CreateSingleEnemy(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
+        {
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
+
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            mobile[0].AddComponent<BRECustomObject>();
+            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+
+            bRECustomObject.IsGangLeader = true;
+
+            if (eventName != "") // Basically for spawning single non-verbal enemies sort of things, even if the event does have a proper name for the initiation part.
+            {
+                if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+            }
+            pendingEventEnemies.Add(mobile[0]);
+        }
+
+        public void LoneEncounterTextInitiate(string eventName, string enemyName, int enemyID)
+        {
+            TextFile.Token[] tokens = null;
+
+            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel"); // Will need to do more with these parts later on, but for now basically do nothing.
+
+            tokens = BREText.LoneEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
+
+            pendingEventInitialTokens = tokens;
+        }
+
+        public void CreateSmallEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
+        {
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
+
+            ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
+            int size = UnityEngine.Random.Range(3, 5);
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+            EnemyEntity entity = behaviour.Entity as EnemyEntity;
+            MobileTeams team = entity.Team;
+            mobile[0].AddComponent<BRECustomObject>();
+            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+            bRECustomObject.LinkedAlliesID = alliedID;
+
+            for (int i = 0; i < size; i++) // Based on how many enemies plan to be spawning in a specific encounter.
+            {
+                if (i == 0) // For the leader specifically
+                {
+                    bRECustomObject.IsGangLeader = true;
+
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName+"_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+                else // For the followers of the leader
+                {
+                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
+                    mobile[0].AddComponent<BRECustomObject>();
+                    bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+                    behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+                    entity = behaviour.Entity as EnemyEntity;
+                    entity.Team = team;
+                    bRECustomObject.LinkedAlliesID = alliedID;
+
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+
+                pendingEventEnemies.Add(mobile[0]);
+            }
+        }
+
+        public void SmallGroupEncounterTextInitiate(string eventName, string enemyName, int enemyID)
+        {
+            TextFile.Token[] tokens = null;
+
+            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel"); // Will need to do more with these parts later on, but for now basically do nothing.
+
+            tokens = BREText.SmallGroupEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
+
+            pendingEventInitialTokens = tokens;
+        }
+
+        public void CreateLargeEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
+        {
+            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
+
+            ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
+            int size = UnityEngine.Random.Range(6, 10);
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+            EnemyEntity entity = behaviour.Entity as EnemyEntity;
+            MobileTeams team = entity.Team;
+            mobile[0].AddComponent<BRECustomObject>();
+            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+            bRECustomObject.LinkedAlliesID = alliedID;
+
+            for (int i = 0; i < size; i++) // Based on how many enemies plan to be spawning in a specific encounter.
+            {
+                if (i == 0) // For the leader specifically
+                {
+                    bRECustomObject.IsGangLeader = true;
+
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+                else // For the followers of the leader
+                {
+                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
+                    mobile[0].AddComponent<BRECustomObject>();
+                    bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
+                    behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
+                    entity = behaviour.Entity as EnemyEntity;
+                    entity.Team = team;
+                    bRECustomObject.LinkedAlliesID = alliedID;
+
+                    if (eventName != "")
+                    {
+                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                    }
+                }
+
+                pendingEventEnemies.Add(mobile[0]);
+            }
+        }
+
+        public void LargeGroupEncounterTextInitiate(string eventName, string enemyName, int enemyID)
+        {
+            TextFile.Token[] tokens = null;
+
+            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel"); // Will need to do more with these parts later on, but for now basically do nothing.
+
+            tokens = BREText.LargeGroupEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
+
+            pendingEventInitialTokens = tokens;
+        }
+
+        public MobileTypes ChooseEnemyFollowers(MobileTypes leader) // Meant for determining encounters where multiple enemies are spawned in a similar group.
+        {
+            int follower = 0; // Definitely change this so maybe there is a "credit" based thing so multiple difficult enemies can't spawn in large groups, but will see.
+            List<int> enemyList = new List<int>();
+            int[] humans = { 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 };
+            MapsFile.Climates climate = (MapsFile.Climates)GameManager.Instance.PlayerGPS.CurrentClimateIndex;
+
+            switch (leader)
+            {
+                case MobileTypes.Spriggan: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 2, 3, 4, 5, 6, 10, 20 })); return (MobileTypes)follower;
+                case MobileTypes.Nymph: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 2, 3, 4, 5, 6, 10, 20 })); return (MobileTypes)follower;
+                case MobileTypes.OrcSergeant: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7 })); return (MobileTypes)follower;
+                case MobileTypes.SkeletalWarrior: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17 })); return (MobileTypes)follower;
+                case MobileTypes.Giant: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 4, 16 })); return (MobileTypes)follower;
+                case MobileTypes.Ghost: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18 })); return (MobileTypes)follower;
+                case MobileTypes.Mummy: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17 })); return (MobileTypes)follower;
+                case MobileTypes.OrcShaman: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 12 })); return (MobileTypes)follower;
+                case MobileTypes.Gargoyle: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 16, 22 })); return (MobileTypes)follower;
+                case MobileTypes.Wraith: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23 })); return (MobileTypes)follower;
+                case MobileTypes.OrcWarlord: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 12, 21 })); return (MobileTypes)follower;
+                case MobileTypes.FrostDaedra: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 38 })); return (MobileTypes)follower;
+                case MobileTypes.FireDaedra: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 35 })); return (MobileTypes)follower;
+                case MobileTypes.Daedroth: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 36 })); return (MobileTypes)follower;
+                case MobileTypes.Vampire: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 19, 28, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.DaedraSeducer: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 8, 12, 16, 25, 26, 27, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.VampireAncient: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 19, 28, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.DaedraLord: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 25, 26, 27, 29 })); return (MobileTypes)follower;
+                case MobileTypes.Lich: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23, 35, 36, 37, 38 })); return (MobileTypes)follower;
+                case MobileTypes.AncientLich: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23, 35, 36, 37, 38 })); return (MobileTypes)follower;
+                case MobileTypes.Mage: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 35, 36, 37, 38, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Spellsword: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Battlemage: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Sorcerer: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 35, 36, 37, 38, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Healer:
+                case MobileTypes.Monk: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Nightblade: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 134, 135, 136, 137, 138, 139, 143 })); return (MobileTypes)follower;
+                case MobileTypes.Bard: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
+                case MobileTypes.Burglar:
+                case MobileTypes.Rogue:
+                case MobileTypes.Acrobat:
+                case MobileTypes.Thief:
+                case MobileTypes.Assassin:
+                case MobileTypes.Barbarian: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 134, 135, 136, 137, 138, 139, 143 })); return (MobileTypes)follower;
+                case MobileTypes.Archer:
+                case MobileTypes.Warrior:
+                case MobileTypes.Knight: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                case MobileTypes.Ranger: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 3, 4, 5, 6, 20, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
+                default: return leader;
+            }
+        }
+
+        // Uses raycasts to find next spawn position
+        void TryPlacingEventObjects(float minDistance = 3f, float maxDistance = 15f) // Make it so different events have different allowed minDistance and maxDistances, when I start making them.
+        {
+            // Define minimum distance from player based on spawn locations. Not sure if these are useful in this case.
+            //const int minDungeonDistance = 8;
+            //const int minLocationDistance = 10;
+            //const int minWildernessDistance = 10; // Will definitely want to play around with the spawn distance mins and maxes tomorrow and such.
+
+            const float overlapSphereRadius = 0.65f;
+            const float separationDistance = 1.25f;
+            const float maxFloorDistance = 5f;
+
+            if (enemiesSpawnedIndex >= pendingEventEnemies.Count)
+                return;
+
+            // Must have received a valid list
+            if (pendingEventEnemies == null || pendingEventEnemies.Count == 0)
+                return;
+
+            // Skip this foe if destroyed (e.g. player left building where pending). Will definitely have to change this later, to basically cancel entire event if player changes scenes.
+            if (!pendingEventEnemies[enemiesSpawnedIndex])
+            {
+                enemiesSpawnedIndex++;
+                return;
+            }
+
+            GameObject anchor;
+            BRECustomObject bREObject = pendingEventEnemies[enemiesSpawnedIndex].GetComponent<BRECustomObject>();
+            if (bREObject.IsGangLeader)
+                anchor = GameManager.Instance.PlayerObject; // Will initially use player as the anchor for where to place the leader object for an event, then use the leader to place the rest.
+            else
+                anchor = pendingEventEnemies[0]; // Just assuming for now that the "leader" of the event will always be the first object created or the first index value of this list.
+
+            // Get roation of spawn ray
+            Quaternion rotation = Quaternion.Euler(0, UnityEngine.Random.Range(0, 360), 0);
+
+            // Get direction vector and create a new ray
+            Vector3 angle = (rotation * Vector3.forward).normalized;
+            Vector3 spawnDirection = anchor.transform.TransformDirection(angle).normalized;
+            Ray ray = new Ray(anchor.transform.position, spawnDirection);
+
+            // Check for a hit
+            Vector3 currentPoint;
+            RaycastHit initialHit;
+            if (Physics.Raycast(ray, out initialHit, maxDistance))
+            {
+                float cos_normal = Vector3.Dot(-spawnDirection, initialHit.normal.normalized);
+                if (cos_normal < 1e-6)
+                    return;
+                float separationForward = separationDistance / cos_normal;
+
+                // Must be greater than minDistance
+                float distanceSlack = initialHit.distance - separationForward - minDistance;
+                if (distanceSlack < 0f)
+                    return;
+
+                // Separate out from hit point
+                float extraDistance = UnityEngine.Random.Range(0f, Mathf.Min(2f, distanceSlack));
+                currentPoint = initialHit.point - spawnDirection * (separationForward + extraDistance);
+            }
+            else
+            {
+                // Player might be in an open area (e.g. outdoors) pick a random point along spawn direction
+                currentPoint = anchor.transform.position + spawnDirection * UnityEngine.Random.Range(minDistance, maxDistance);
+            }
+
+            // Must be able to find a surface below
+            RaycastHit floorHit;
+            ray = new Ray(currentPoint, Vector3.down);
+            if (!Physics.Raycast(ray, out floorHit, maxFloorDistance))
+                return;
+
+            // Ensure this is open space
+            Vector3 testPoint = floorHit.point + Vector3.up * separationDistance;
+            Collider[] colliders = Physics.OverlapSphere(testPoint, overlapSphereRadius);
+            if (colliders.Length > 0)
+                return;
+
+            // This looks like a good spawn position
+            pendingEventEnemies[enemiesSpawnedIndex].transform.position = testPoint;
+            FinalizeFoe(pendingEventEnemies[enemiesSpawnedIndex]);
+            pendingEventEnemies[enemiesSpawnedIndex].transform.LookAt(anchor.transform.position);
+
+            // Increment count
+            enemiesSpawnedIndex++;
+        }
+
+        // Fine tunes foe position slightly based on mobility and enables GameObject
+        void FinalizeFoe(GameObject go)
+        {
+            var mobileUnit = go.GetComponentInChildren<MobileUnit>();
+            if (mobileUnit)
+            {
+                // Align ground creatures on surface, raise flying creatures slightly into air
+                if (mobileUnit.Enemy.Behaviour != MobileBehaviour.Flying)
+                    GameObjectHelper.AlignControllerToGround(go.GetComponent<CharacterController>());
+                else
+                    go.transform.localPosition += Vector3.up * 1.5f;
+            }
+            else
+            {
+                // Just align to ground
+                GameObjectHelper.AlignControllerToGround(go.GetComponent<CharacterController>());
+            }
+
+            var bREObject = go.GetComponent<BRECustomObject>();
+            bREObject.ReadyToSpawn = true;
+        }
+
+        public static void PopRegularText(TextFile.Token[] tokens)
+        {
+            if (tokens[0].text == "") { return; } // Basically there for the "AggroText" that is shown when an enemy becomes hostile, but for those that should have none but will still pass this method.
+
+            DaggerfallMessageBox textBox = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+            textBox.SetTextTokens(tokens);
+            textBox.ClickAnywhereToClose = true;
+            textBox.Show();
+        }
+
+        public static int PickOneOf(params int[] values) // Pango provided assistance in making this much cleaner way of doing the random value choice part, awesome.
+        {
+            return values[UnityEngine.Random.Range(0, values.Length)];
+        }
+
+        public static bool CheckArrayForValue(int num, int[] values)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (num == values[i])
+                    return true;
+            }
+            return false;
+        }
+
+        #endregion
+
         /*public bool RollGoodWildernessDayEncounter()
         {
             //latestEncounterIndex = PickOneOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
@@ -833,394 +1265,5 @@ namespace BetterRandomEncounters
                     return false;
             }
         }*/
-
-        public static int PickOneOf(params int[] values) // Pango provided assistance in making this much cleaner way of doing the random value choice part, awesome.
-        {
-            return values[UnityEngine.Random.Range(0, values.Length)];
-        }
-
-        public static bool CheckArrayForValue(int num, int[] values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                if (num == values[i])
-                    return true;
-            }
-            return false;
-        }
-
-        public static void PopRegularText(TextFile.Token[] tokens)
-        {
-            if (tokens[0].text == "") { return; } // Basically there for the "AggroText" that is shown when an enemy becomes hostile, but for those that should have none but will still pass this method.
-
-            DaggerfallMessageBox textBox = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
-            textBox.SetTextTokens(tokens);
-            textBox.ClickAnywhereToClose = true;
-            textBox.Show();
-        }
-
-        public void CreateSingleEnemy(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
-        {
-            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
-
-            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
-            mobile[0].AddComponent<BRECustomObject>();
-            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
-
-            bRECustomObject.IsGangLeader = true;
-
-            if (eventName != "") // Basically for spawning single non-verbal enemies sort of things, even if the event does have a proper name for the initiation part.
-            {
-                if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
-            }
-            pendingEventEnemies.Add(mobile[0]);
-        }
-
-        public void LoneEncounterTextInitiate(string eventName, string enemyName, int enemyID)
-        {
-            TextFile.Token[] tokens = null;
-            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
-
-            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
-            tokens = BREText.LoneEncounterTextFinder(eventName, enemyName, enemyID);
-
-            pendingEventInitialTokens = tokens;
-        }
-
-        public void CreateSmallEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
-        {
-            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
-
-            ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
-            int size = UnityEngine.Random.Range(3, 5);
-            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
-            DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
-            EnemyEntity entity = behaviour.Entity as EnemyEntity;
-            MobileTeams team = entity.Team;
-            mobile[0].AddComponent<BRECustomObject>();
-            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
-            bRECustomObject.LinkedAlliesID = alliedID; // Guess try and work on the transform part next for the groups of enemies. Then probably actually test this and see if everything is working at all. 
-             // Might have to add another part to the update for event spawns like "trying to position encounter" or something, then uses this time to find a valid position to place things. 
-            for (int i = 0; i < size; i++) // Based on how many enemies plan to be spawning in a specific encounter.
-            {
-                if (i == 0) // For the leader specifically
-                {
-                    bRECustomObject.IsGangLeader = true;
-
-                    if (eventName != "")
-                    {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName+"_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
-                    }
-                }
-                else // For the followers of the leader
-                {
-                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
-                    mobile[0].AddComponent<BRECustomObject>();
-                    bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
-                    behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
-                    entity = behaviour.Entity as EnemyEntity;
-                    entity.Team = team;
-                    bRECustomObject.LinkedAlliesID = alliedID;
-
-                    if (eventName != "")
-                    {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
-                    }
-                }
-
-                pendingEventEnemies.Add(mobile[0]);
-            }
-        }
-
-        public void SmallGroupEncounterTextInitiate(string eventName, string enemyName, int enemyID)
-        {
-            TextFile.Token[] tokens = null;
-            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
-
-            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
-            tokens = BREText.SmallGroupEncounterTextFinder(eventName, enemyName, enemyID);
-
-            pendingEventInitialTokens = tokens;
-        }
-
-        public void CreateLargeEnemyGroup(string eventName, string enemyName, MobileTypes enemyType = MobileTypes.Acrobat, MobileReactions enemyReact = MobileReactions.Hostile, bool hasGreet = false, bool hasAdd = false, bool hasAggro = false)
-        {
-            if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
-
-            ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
-            int size = UnityEngine.Random.Range(6, 10);
-            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
-            DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
-            EnemyEntity entity = behaviour.Entity as EnemyEntity;
-            MobileTeams team = entity.Team;
-            mobile[0].AddComponent<BRECustomObject>();
-            BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
-            bRECustomObject.LinkedAlliesID = alliedID;
-
-            for (int i = 0; i < size; i++) // Based on how many enemies plan to be spawning in a specific encounter.
-            {
-                if (i == 0) // For the leader specifically
-                {
-                    bRECustomObject.IsGangLeader = true;
-
-                    if (eventName != "")
-                    {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
-                    }
-                }
-                else // For the followers of the leader
-                {
-                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
-                    mobile[0].AddComponent<BRECustomObject>();
-                    bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
-                    behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
-                    entity = behaviour.Entity as EnemyEntity;
-                    entity.Team = team;
-                    bRECustomObject.LinkedAlliesID = alliedID;
-
-                    if (eventName != "")
-                    {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
-                    }
-                }
-
-                pendingEventEnemies.Add(mobile[0]);
-            }
-        }
-
-        public void LargeGroupEncounterTextInitiate(string eventName, string enemyName, int enemyID)
-        {
-            TextFile.Token[] tokens = null;
-            DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
-
-            ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel");
-            tokens = BREText.LargeGroupEncounterTextFinder(eventName, enemyName, enemyID);
-
-            pendingEventInitialTokens = tokens;
-        }
-
-        public MobileTypes ChooseEnemyFollowers(MobileTypes leader) // Meant for determining encounters where multiple enemies are spawned in a similar group.
-        {
-            int follower = 0;
-            List<int> enemyList = new List<int>();
-            int[] humans = { 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 };
-            MapsFile.Climates climate = (MapsFile.Climates)GameManager.Instance.PlayerGPS.CurrentClimateIndex;
-
-            switch (leader)
-            {
-                case MobileTypes.Spriggan: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 2, 3, 4, 5, 6, 10, 20 })); return (MobileTypes)follower;
-                case MobileTypes.Nymph: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 2, 3, 4, 5, 6, 10, 20 })); return (MobileTypes)follower;
-                case MobileTypes.OrcSergeant: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7 })); return (MobileTypes)follower;
-                case MobileTypes.SkeletalWarrior: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17 })); return (MobileTypes)follower;
-                case MobileTypes.Giant: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 4, 16 })); return (MobileTypes)follower;
-                case MobileTypes.Ghost: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18 })); return (MobileTypes)follower;
-                case MobileTypes.Mummy: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17 })); return (MobileTypes)follower;
-                case MobileTypes.OrcShaman: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 12 })); return (MobileTypes)follower;
-                case MobileTypes.Gargoyle: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 16, 22 })); return (MobileTypes)follower;
-                case MobileTypes.Wraith: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23 })); return (MobileTypes)follower;
-                case MobileTypes.OrcWarlord: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 12, 21 })); return (MobileTypes)follower;
-                case MobileTypes.FrostDaedra: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 38 })); return (MobileTypes)follower;
-                case MobileTypes.FireDaedra: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 35 })); return (MobileTypes)follower;
-                case MobileTypes.Daedroth: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 36 })); return (MobileTypes)follower;
-                case MobileTypes.Vampire: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 19, 28, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
-                case MobileTypes.DaedraSeducer: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 7, 8, 12, 16, 25, 26, 27, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
-                case MobileTypes.VampireAncient: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 19, 28, 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
-                case MobileTypes.DaedraLord: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 25, 26, 27, 29 })); return (MobileTypes)follower;
-                case MobileTypes.Lich: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23, 35, 36, 37, 38 })); return (MobileTypes)follower;
-                case MobileTypes.AncientLich: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 15, 17, 18, 19, 23, 35, 36, 37, 38 })); return (MobileTypes)follower;
-                case MobileTypes.Mage: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 35, 36, 37, 38, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
-                case MobileTypes.Spellsword: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
-                case MobileTypes.Battlemage: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
-                case MobileTypes.Sorcerer: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 1, 35, 36, 37, 38, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
-                case MobileTypes.Healer:
-                case MobileTypes.Monk: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
-                case MobileTypes.Nightblade: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 134, 135, 136, 137, 138, 139, 143 })); return (MobileTypes)follower;
-                case MobileTypes.Bard: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 200 })); if (follower == 200) { follower = PickOneOf(humans); } return (MobileTypes)follower;
-                case MobileTypes.Burglar:
-                case MobileTypes.Rogue:
-                case MobileTypes.Acrobat:
-                case MobileTypes.Thief:
-                case MobileTypes.Assassin:
-                case MobileTypes.Barbarian: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 134, 135, 136, 137, 138, 139, 143 })); return (MobileTypes)follower;
-                case MobileTypes.Archer:
-                case MobileTypes.Warrior:
-                case MobileTypes.Knight: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
-                case MobileTypes.Ranger: follower = PickOneOf(ClimateSpawnExceptions(climate, new List<int> { 0, 3, 4, 5, 6, 20, 128, 129, 130, 131, 132, 134, 140, 141, 142, 143, 144, 145 })); return (MobileTypes)follower;
-                default: return leader;
-            }
-        }
-
-        // Uses raycasts to find next spawn position just outside of player's field of view
-        void TryPlacingEventObjects(float minDistance = 5f, float maxDistance = 20f) // Mess with this tomorrow. Remember pending is current a list, not an array, so yeah.
-        {
-            // Define minimum distance from player based on spawn locations. Not sure if these are useful in this case.
-            //const int minDungeonDistance = 8;
-            //const int minLocationDistance = 10;
-            //const int minWildernessDistance = 10; // Will definitely want to play around with the spawn distance mins and maxes tomorrow and such.
-
-            const float overlapSphereRadius = 0.65f;
-            const float separationDistance = 1.25f;
-            const float maxFloorDistance = 4f;
-
-            if (enemiesSpawnedIndex >= pendingEventEnemies.Count)
-                return;
-
-            // Must have received a valid list
-            if (pendingEventEnemies == null || pendingEventEnemies.Count == 0)
-                return;
-
-            // Skip this foe if destroyed (e.g. player left building where pending). Will definitely have to change this later, to basically cancel entire event if player changes scenes.
-            if (!pendingEventEnemies[enemiesSpawnedIndex])
-            {
-                enemiesSpawnedIndex++;
-                return;
-            }
-
-            GameObject anchor;
-            BRECustomObject bREObject = pendingEventEnemies[enemiesSpawnedIndex].GetComponent<BRECustomObject>();
-            if (bREObject.IsGangLeader)
-                anchor = GameManager.Instance.PlayerObject; // Will initially use player as the anchor for where to place the leader object for an event, then use the leader to place the rest.
-            else
-                anchor = pendingEventEnemies[0]; // Just assuming for now that the "leader" of the event will always be the first object created or the first index value of this list.
-
-            // Get roation of spawn ray
-            Quaternion rotation = Quaternion.Euler(0, UnityEngine.Random.Range(0, 360), 0);
-
-            // Get direction vector and create a new ray
-            Vector3 angle = (rotation * Vector3.forward).normalized;
-            Vector3 spawnDirection = anchor.transform.TransformDirection(angle).normalized;
-            Ray ray = new Ray(anchor.transform.position, spawnDirection);
-
-            // Check for a hit
-            Vector3 currentPoint;
-            RaycastHit initialHit;
-            if (Physics.Raycast(ray, out initialHit, maxDistance))
-            {
-                float cos_normal = Vector3.Dot(-spawnDirection, initialHit.normal.normalized);
-                if (cos_normal < 1e-6)
-                    return;
-                float separationForward = separationDistance / cos_normal;
-
-                // Must be greater than minDistance
-                float distanceSlack = initialHit.distance - separationForward - minDistance;
-                if (distanceSlack < 0f)
-                    return;
-
-                // Separate out from hit point
-                float extraDistance = UnityEngine.Random.Range(0f, Mathf.Min(2f, distanceSlack));
-                currentPoint = initialHit.point - spawnDirection * (separationForward + extraDistance);
-            }
-            else
-            {
-                // Player might be in an open area (e.g. outdoors) pick a random point along spawn direction
-                currentPoint = anchor.transform.position + spawnDirection * UnityEngine.Random.Range(minDistance, maxDistance);
-            }
-
-            // Must be able to find a surface below
-            RaycastHit floorHit;
-            ray = new Ray(currentPoint, Vector3.down);
-            if (!Physics.Raycast(ray, out floorHit, maxFloorDistance))
-                return;
-
-            // Ensure this is open space
-            Vector3 testPoint = floorHit.point + Vector3.up * separationDistance;
-            Collider[] colliders = Physics.OverlapSphere(testPoint, overlapSphereRadius);
-            if (colliders.Length > 0)
-                return;
-
-            // This looks like a good spawn position
-            pendingEventEnemies[enemiesSpawnedIndex].transform.position = testPoint;
-            FinalizeFoe(pendingEventEnemies[enemiesSpawnedIndex]);
-            pendingEventEnemies[enemiesSpawnedIndex].transform.LookAt(anchor.transform.position);
-
-            // Increment count
-            enemiesSpawnedIndex++;
-        }
-
-        // Fine tunes foe position slightly based on mobility and enables GameObject
-        void FinalizeFoe(GameObject go)
-        {
-            var mobileUnit = go.GetComponentInChildren<MobileUnit>();
-            if (mobileUnit)
-            {
-                // Align ground creatures on surface, raise flying creatures slightly into air
-                if (mobileUnit.Enemy.Behaviour != MobileBehaviour.Flying)
-                    GameObjectHelper.AlignControllerToGround(go.GetComponent<CharacterController>());
-                else
-                    go.transform.localPosition += Vector3.up * 1.5f;
-            }
-            else
-            {
-                // Just align to ground
-                GameObjectHelper.AlignControllerToGround(go.GetComponent<CharacterController>());
-            }
-
-            var bREObject = go.GetComponent<BRECustomObject>();
-            bREObject.ReadyToSpawn = true;
-        }
-
-        // Check if raycast hit a mobile enemy
-        public static bool MobileEnemyCheck(RaycastHit hitInfo, out DaggerfallEntityBehaviour mobileEnemy)
-        {
-            mobileEnemy = hitInfo.transform.GetComponent<DaggerfallEntityBehaviour>();
-
-            return mobileEnemy != null;
-        }
-
-        // Check if mobile enemy has BRECustomObject attached to it
-        public static bool BRECustObjCheck(DaggerfallEntityBehaviour mobileEnemy, out BRECustomObject custObject)
-        {
-            custObject = mobileEnemy.GetComponent<BRECustomObject>();
-
-            return custObject != null;
-        }
-
-        public static void ExecuteBRECustObj(DaggerfallEntityBehaviour mobileEnemyBehaviour, BRECustomObject custObject)
-        {
-            EnemyEntity enemyEntity = mobileEnemyBehaviour.Entity as EnemyEntity;
-            switch (GameManager.Instance.PlayerActivate.CurrentMode)
-            {
-                case PlayerActivateModes.Info:
-                    break;
-                case PlayerActivateModes.Grab:
-                case PlayerActivateModes.Talk:
-                    BRETalk(custObject);
-                    break;
-                case PlayerActivateModes.Steal:
-                    break;
-            }
-        }
-
-        public static void BRETalk(BRECustomObject custObject)
-        {
-            if (custObject == null)
-                return;
-
-            if (!custObject.GreetingShown && custObject.HasGreeting)
-            {
-                PopRegularText(custObject.GreetingText);
-                custObject.GreetingShown = true;
-                return;
-            }
-
-            if (custObject.HasMoreText)
-            {
-                PopRegularText(custObject.AdditionalText);
-                custObject.HasMoreText = false;
-                return;
-            }
-        }
-
-        #endregion
     }
 }

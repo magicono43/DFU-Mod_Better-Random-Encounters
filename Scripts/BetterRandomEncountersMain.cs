@@ -55,8 +55,6 @@ namespace BetterRandomEncounters
         {
             Debug.Log("Begin mod init: BetterRandomEncounters");
 
-            EnemyDeath.OnEnemyDeath += BetterRandomEncountersLoot_OnEnemyDeath;
-
             Debug.Log("Finished mod init: BetterRandomEncounters");
         }
 
@@ -125,31 +123,66 @@ namespace BetterRandomEncounters
                     {
                         // Check for mobile enemy hit
                         DaggerfallEntityBehaviour mobileEnemyBehaviour;
-                        if (BREWork.MobileEnemyCheck(hit, out mobileEnemyBehaviour))
+                        if (MobileEnemyCheck(hit, out mobileEnemyBehaviour))
                         {
                             BRECustomObject bRECustomObject;
-                            if (BREWork.BRECustObjCheck(mobileEnemyBehaviour, out bRECustomObject))
-                                BREWork.ExecuteBRECustObj(mobileEnemyBehaviour, bRECustomObject);
+                            if (BRECustObjCheck(mobileEnemyBehaviour, out bRECustomObject))
+                                ExecuteBRECustObj(mobileEnemyBehaviour, bRECustomObject);
                         }
                     }
                 }
             }
         }
 
-        public static void BetterRandomEncountersLoot_OnEnemyDeath(object sender, EventArgs e) // Populates enemy loot upon their death.
+        // Check if raycast hit a mobile enemy
+        public static bool MobileEnemyCheck(RaycastHit hitInfo, out DaggerfallEntityBehaviour mobileEnemy)
         {
-            EnemyDeath enemyDeath = sender as EnemyDeath;
-            if (enemyDeath != null)
+            mobileEnemy = hitInfo.transform.GetComponent<DaggerfallEntityBehaviour>();
+
+            return mobileEnemy != null;
+        }
+
+        // Check if mobile enemy has BRECustomObject attached to it
+        public static bool BRECustObjCheck(DaggerfallEntityBehaviour mobileEnemy, out BRECustomObject custObject)
+        {
+            custObject = mobileEnemy.GetComponent<BRECustomObject>();
+
+            return custObject != null;
+        }
+
+        public static void ExecuteBRECustObj(DaggerfallEntityBehaviour mobileEnemyBehaviour, BRECustomObject custObject)
+        {
+            EnemyEntity enemyEntity = mobileEnemyBehaviour.Entity as EnemyEntity;
+            switch (GameManager.Instance.PlayerActivate.CurrentMode)
             {
-                DaggerfallEntityBehaviour entityBehaviour = enemyDeath.GetComponent<DaggerfallEntityBehaviour>();
-                if (entityBehaviour != null)
-                {
-                    EnemyEntity enemyEntity = entityBehaviour.Entity as EnemyEntity;
-                    if (enemyEntity != null)
-                    {
-						
-                    }
-                }
+                case PlayerActivateModes.Info:
+                    break;
+                case PlayerActivateModes.Grab:
+                case PlayerActivateModes.Talk:
+                    BRETalk(custObject);
+                    break;
+                case PlayerActivateModes.Steal:
+                    break;
+            }
+        }
+
+        public static void BRETalk(BRECustomObject custObject)
+        {
+            if (custObject == null)
+                return;
+
+            if (!custObject.GreetingShown && custObject.HasGreeting)
+            {
+                BREWork.PopRegularText(custObject.GreetingText);
+                custObject.GreetingShown = true;
+                return;
+            }
+
+            if (custObject.HasMoreText)
+            {
+                BREWork.PopRegularText(custObject.AdditionalText);
+                custObject.HasMoreText = false;
+                return;
             }
         }
 

@@ -30,13 +30,6 @@ namespace BetterRandomEncounters
     {
         #region Fields
 
-        ulong questUID;
-        bool isFoeDead = false;
-
-        [NonSerialized] DaggerfallEntityBehaviour enemyEntityBehaviour = null;
-
-
-
         TextFile.Token[] greetingText;
         TextFile.Token[] additionalText;
         TextFile.Token[] aggroText = DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.Nothing, "");
@@ -53,33 +46,6 @@ namespace BetterRandomEncounters
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// Gets assigned Quest UID.
-        /// </summary>
-        public ulong QuestUID
-        {
-            get { return questUID; }
-        }
-
-        /// <summary>
-        /// Flag stating if this Foe is dead.
-        /// </summary>
-        public bool IsFoeDead
-        {
-            get { return isFoeDead; }
-        }
-
-        /// <summary>
-        /// Gets DaggerfallEntityBehaviour on enemy.
-        /// Will be null if not an enemy quest resource.
-        /// </summary>
-        DaggerfallEntityBehaviour EnemyEntityBehaviour
-        {
-            get { return enemyEntityBehaviour; }
-        }
-
-
 
         public TextFile.Token[] GreetingText
         {
@@ -170,20 +136,21 @@ namespace BetterRandomEncounters
                 EnemyMotor motor = GetComponent<EnemyMotor>();
                 if (motor != null && motor.IsHostile)
                 {
-                    BREWork.PopRegularText(AggroText);
-                    aggroTextShown = true;
-                    hasGreeting = false;
-                    hasMoreText = false;
+                    BREWork.PopRegularText(AggroText); // Try and figure out tomorrow why this section of code seems to not be getting ran? Or at least the debug down there is not apparently, weird.
+                    AggroTextShown = true;
+                    HasGreeting = false;
+                    HasMoreText = false;
 
                     BRECustomObject[] gangMembers = FindObjectsOfType<BRECustomObject>(); // Attempt to turn all event "gang members" hostile once one becomes hostile to the player.
-                    if (gangMembers.Length > 1)
+                    Debug.Log("There is this many gang members in the scene: " + gangMembers.Length.ToString());
+                    if (gangMembers.Length > 2) // 2 as to factor in the mod object that also has this componenet attached to it in the scene, which I just learned is the case, lol.
                     {
                         for (int i = 0; i < gangMembers.Length; i++)
                         {
                             if (gangMembers[i].LinkedAlliesID == linkedAlliesID)
                             {
                                 DaggerfallEntityBehaviour entityBehaviour = gangMembers[i].GetComponent<DaggerfallEntityBehaviour>();
-                                if (entityBehaviour.EntityType == EntityTypes.EnemyMonster || entityBehaviour.EntityType == EntityTypes.EnemyClass)
+                                if (entityBehaviour != null && (entityBehaviour.EntityType == EntityTypes.EnemyMonster || entityBehaviour.EntityType == EntityTypes.EnemyClass))
                                 {
                                     EnemyMotor enemyMotor = entityBehaviour.GetComponent<EnemyMotor>();
                                     if (enemyMotor)
