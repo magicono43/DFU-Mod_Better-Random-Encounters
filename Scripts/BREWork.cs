@@ -5,7 +5,7 @@
 // Created On: 	    1/22/2022, 8:45 PM
 // Last Edit:		1/22/2022, 8:45 PM
 // Version:			1.00
-// Special Thanks:  Hazelnut, Ralzar, Badluckburt, Kab the Bird Ranger, JohnDoom
+// Special Thanks:  Hazelnut, Ralzar, Badluckburt, Kab the Bird Ranger, JohnDoom, Uncanny Valley
 // Modifier:			
 
 using System;
@@ -757,9 +757,9 @@ namespace BetterRandomEncounters
 
             if (eventName != "") // Basically for spawning single non-verbal enemies sort of things, even if the event does have a proper name for the initiation part.
             {
-                if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName, enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                if (hasGreet) { bRECustomObject.GreetingText = BREGenericText.IndividualNPCTextFinder(eventName, enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                if (hasAdd) { bRECustomObject.AdditionalText = BREGenericText.IndividualNPCTextFinder(eventName, enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                if (hasAggro) { bRECustomObject.AggroText = BREGenericText.IndividualNPCTextFinder(eventName, enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
             }
             pendingEventEnemies.Add(mobile[0]);
         }
@@ -771,7 +771,7 @@ namespace BetterRandomEncounters
             DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
             ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel"); // Will need to do more with these parts later on, but for now basically do nothing.
 
-            tokens = BREText.LoneEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
+            tokens = BREGenericText.LoneEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
 
             pendingEventInitialTokens = tokens;
         }
@@ -798,9 +798,9 @@ namespace BetterRandomEncounters
 
                     if (eventName != "")
                     {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName+"_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                        if (hasGreet) { bRECustomObject.GreetingText = BREGenericText.IndividualNPCTextFinder(eventName+"_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREGenericText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREGenericText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
                     }
                 }
                 else // For the followers of the leader
@@ -815,9 +815,9 @@ namespace BetterRandomEncounters
 
                     if (eventName != "")
                     {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                        if (hasGreet) { bRECustomObject.GreetingText = BREGenericText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREGenericText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREGenericText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
                     }
                 }
 
@@ -832,7 +832,7 @@ namespace BetterRandomEncounters
             DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
             ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel"); // Will need to do more with these parts later on, but for now basically do nothing.
 
-            tokens = BREText.SmallGroupEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
+            tokens = BREGenericText.SmallGroupEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
 
             pendingEventInitialTokens = tokens;
         }
@@ -859,9 +859,9 @@ namespace BetterRandomEncounters
 
                     if (eventName != "")
                     {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                        if (hasGreet) { bRECustomObject.GreetingText = BREGenericText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREGenericText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREGenericText.IndividualNPCTextFinder(eventName + "_Leader", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
                     }
                 }
                 else // For the followers of the leader
@@ -876,9 +876,9 @@ namespace BetterRandomEncounters
 
                     if (eventName != "")
                     {
-                        if (hasGreet) { bRECustomObject.GreetingText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
-                        if (hasAdd) { bRECustomObject.AdditionalText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
-                        if (hasAggro) { bRECustomObject.AggroText = BREText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
+                        if (hasGreet) { bRECustomObject.GreetingText = BREGenericText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Greet"); bRECustomObject.HasGreeting = true; }
+                        if (hasAdd) { bRECustomObject.AdditionalText = BREGenericText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Add"); bRECustomObject.HasMoreText = true; }
+                        if (hasAggro) { bRECustomObject.AggroText = BREGenericText.IndividualNPCTextFinder(eventName + "_Follower", enemyName, "Aggro"); bRECustomObject.HasAggroText = true; }
                     }
                 }
 
@@ -893,7 +893,7 @@ namespace BetterRandomEncounters
             DaggerfallMessageBox initialEventPopup = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
             ModManager.Instance.SendModMessage("TravelOptions", "pauseTravel"); // Will need to do more with these parts later on, but for now basically do nothing.
 
-            tokens = BREText.LargeGroupEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
+            tokens = BREGenericText.LargeGroupEncounterTextFinder(eventName, enemyName, enemyID); // Possibly just pass enemy gameobject later for easier use of object properties like gender, name, etc.
 
             pendingEventInitialTokens = tokens;
         }

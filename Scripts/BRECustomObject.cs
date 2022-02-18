@@ -5,7 +5,7 @@
 // Created On: 	    1/22/2022, 8:45 PM
 // Last Edit:		1/22/2022, 8:45 PM
 // Version:			1.00
-// Special Thanks:  Hazelnut, Ralzar, Badluckburt, Kab the Bird Ranger, JohnDoom
+// Special Thanks:  Hazelnut, Ralzar, Badluckburt, Kab the Bird Ranger, JohnDoom, Uncanny Valley
 // Modifier:	
 
 using System;

@@ -7,11 +7,15 @@
     "ModDescription": "Adds Entirely Script Based Random Encounters System To Daggerfall.",
     "GUID": "64f6e3ba-7656-446a-acfc-b56275b4d9ec",
     "Files": [
-        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BREWork.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRESmallGangEvents.cs",
         "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BetterRandomEncountersMain.cs",
         "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BREPrefabData.cs",
-        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRETextTokenHolder.cs",
-        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRECustomObject.cs"
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BREWork.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BREGenericText.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRELargeGangEvents.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRELoneEnemyEvents.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRECustomObject.cs",
+        "Assets/Game/Mods/DFU-Mod_Better-Random-Encounters/Scripts/BRESpecialEvents.cs"
     ],
     "Dependencies": [
         {
