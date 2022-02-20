@@ -17,91 +17,201 @@ namespace BetterRandomEncounters
 {
     public class BRELoneEnemyEvent
     {
-        public static TextFile.Token[] LoneEncounterTextFinder(string eventName, string enemyName, int enemyID)
+        public static string Lone_Friendly_Mage()
         {
-            switch (eventName)
-            {
-                case "Lone_Friendly":
-                    return DaggerfallUnity.Instance.TextProvider.CreateTokens(
-                    TextFile.Formatting.JustifyCenter,
-                    GetRandomLoneFriendlyEncounterText(enemyName, enemyID));
-                case "Lone_Hostile":
-                    return DaggerfallUnity.Instance.TextProvider.CreateTokens(
-                    TextFile.Formatting.JustifyCenter,
-                    GetRandomLoneHostileEncounterText(enemyName, enemyID));
-                default:
-                    return DaggerfallUnity.Instance.TextProvider.CreateTokens(
-                        TextFile.Formatting.JustifyCenter,
-                        "Text Token Not Found");
-            }
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Mage Place Holder Intro Text.";
+            else
+                return "Friendly Mage Place Holder Intro Text.";
         }
 
-        public static string GetRandomLoneFriendlyEncounterText(string enemyName, int enemyID)
+        public static string Lone_Friendly_Spellsword()
         {
-            int choice = BREWork.PickOneOf(1, 2, 3);
+            int choice = BREWork.PickOneOf(1, 2);
 
-            if (enemyID < 128) // None Class NPCs
-            {
-                switch (choice)
-                {
-                    case 1:
-                        return "You happen upon a seemingly friendly " + enemyName + ".";
-                    case 2:
-                        return "You and the " + enemyName + " lock eyes for a moment, but they do not attack, perhaps they are friendly?";
-                    case 3:
-                        return "That " + enemyName + " does not immediately seem hostile, perhaps it's friendly?";
-                    default:
-                        return "";
-                }
-            }
-            else // Class NPCs
-            {
-                switch (choice)
-                {
-                    case 1:
-                        return "You happen upon a seemingly friendly " + enemyName + ".";
-                    case 2:
-                        return "You and the " + enemyName + " lock eyes for a moment, but they do not attack, perhaps they are friendly?";
-                    case 3:
-                        return "That " + enemyName + " does not immediately seem hostile, perhaps it's friendly?";
-                    default:
-                        return "";
-                }
-            }
+            if (choice == 1)
+                return "Friendly Spellsword Place Holder Intro Text.";
+            else
+                return "Friendly Spellsword Place Holder Intro Text.";
         }
 
-        public static string GetRandomLoneHostileEncounterText(string enemyName, int enemyID)
+        public static string Lone_Friendly_Battlemage()
         {
-            int choice = BREWork.PickOneOf(1, 2, 3);
+            int choice = BREWork.PickOneOf(1, 2);
 
-            if (enemyID < 128) // None Class NPCs
-            {
-                switch (choice)
-                {
-                    case 1:
-                        return "You happen upon a hostile " + enemyName + ".";
-                    case 2:
-                        return "You and the " + enemyName + " lock eyes for a moment, and they rush toward you.";
-                    case 3:
-                        return "That " + enemyName + " is coming right for you!";
-                    default:
-                        return "";
-                }
-            }
-            else // Class NPCs
-            {
-                switch (choice)
-                {
-                    case 1:
-                        return "You happen upon a hostile " + enemyName + ".";
-                    case 2:
-                        return "You and the " + enemyName + " lock eyes for a moment, and they rush toward you.";
-                    case 3:
-                        return "That " + enemyName + " is coming right for you!";
-                    default:
-                        return "";
-                }
-            }
+            if (choice == 1)
+                return "Friendly Battlemage Place Holder Intro Text.";
+            else
+                return "Friendly Battlemage Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Sorcerer()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Sorcerer Place Holder Intro Text.";
+            else
+                return "Friendly Sorcerer Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Healer()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "You see a Healer walking with great purpose in each stride." +
+                    "They look well prepared for a long journey.";
+            else
+                return "You see a Healer kneeling down by some foliage." +
+                    "They have a slightly bulging pouch with them and" +
+                    "appear to be searching for something." +
+                    "Foraging for ingredients perhaps?";
+        }
+
+        public static string Lone_Friendly_Nightblade()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Nightblade Place Holder Intro Text.";
+            else
+                return "Friendly Nightblade Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Bard()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Bard Place Holder Intro Text.";
+            else
+                return "Friendly Bard Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Burglar()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Burglar Place Holder Intro Text.";
+            else
+                return "Friendly Burglar Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Rogue()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Rogue Place Holder Intro Text.";
+            else
+                return "Friendly Rogue Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Acrobat()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Acrobat Place Holder Intro Text.";
+            else
+                return "Friendly Acrobat Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Thief()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Thief Place Holder Intro Text.";
+            else
+                return "Friendly Thief Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Assassin()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Assassin Place Holder Intro Text.";
+            else
+                return "Friendly Assassin Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Monk()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "You see a Monk walking with great purpose in each stride." +
+                    "They look well prepared for a long journey.";
+            else
+                return "You see a Monk, sitting with legs crossed, still as a statue," +
+                    "besides the slow but steady rising and falling of their chest." +
+                    "Clearly in a state of quiet meditation.";
+        }
+
+        public static string Lone_Friendly_Archer()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "You see an Archer, they appear to be shooting at various stationary" +
+                    "objects, then retrieving their arrows and repeating the process." +
+                    "Target practice it would seem.";
+            else
+                return "You see an Archer, they appear to be in the middle of an intense" +
+                    "personal training regiment of some sort, jumping-jacks, push-ups," +
+                    "squats, sprints, marching. Training for something perhaps.";
+        }
+
+        public static string Lone_Friendly_Ranger()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Ranger Place Holder Intro Text.";
+            else
+                return "Friendly Ranger Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Barbarian()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "Friendly Barbarian Place Holder Intro Text.";
+            else
+                return "Friendly Barbarian Place Holder Intro Text.";
+        }
+
+        public static string Lone_Friendly_Warrior()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "You see a Warrior, they appear to be in the middle of an intense" +
+                    "personal training regiment of some sort, jumping-jacks, push-ups," +
+                    "squats, sprints, marching. Training for something perhaps.";
+            else
+                return "You see a Warrior sitting on an old tree stump, with a small arsenal" +
+                    "of weapons by their side. They appear to be performing maintenance on" +
+                    "each one of them, sharpening and polishing each in a meticulous fashion.";
+        }
+
+        public static string Lone_Friendly_Knight()
+        {
+            int choice = BREWork.PickOneOf(1, 2);
+
+            if (choice == 1)
+                return "You see a Knight, they appear to be in the middle of an intense" +
+                    "personal training regiment of some sort, jumping-jacks, push-ups," +
+                    "squats, sprints, marching. Training for something perhaps.";
+            else
+                return "Friendly Knight Place Holder Intro Text.";
         }
 
         public static TextFile.Token[] IndividualNPCTextFinder(string eventName, string enemyName, string textType = "")

@@ -80,14 +80,44 @@ namespace BetterRandomEncounters
             }
             else // Class NPCs
             {
-                switch (choice)
+                switch (enemyID)
                 {
-                    case 1:
-                        return "You happen upon a seemingly friendly " + enemyName + ".";
-                    case 2:
-                        return "You and the " + enemyName + " lock eyes for a moment, but they do not attack, perhaps they are friendly?";
-                    case 3:
-                        return "That " + enemyName + " does not immediately seem hostile, perhaps it's friendly?";
+                    case 128:
+                        return BRELoneEnemyEvent.Lone_Friendly_Mage();
+                    case 129:
+                        return BRELoneEnemyEvent.Lone_Friendly_Spellsword();
+                    case 130:
+                        return BRELoneEnemyEvent.Lone_Friendly_Battlemage();
+                    case 131:
+                        return BRELoneEnemyEvent.Lone_Friendly_Sorcerer();
+                    case 132:
+                        return BRELoneEnemyEvent.Lone_Friendly_Healer();
+                    case 133:
+                        return BRELoneEnemyEvent.Lone_Friendly_Nightblade();
+                    case 134:
+                        return BRELoneEnemyEvent.Lone_Friendly_Bard();
+                    case 135:
+                        return BRELoneEnemyEvent.Lone_Friendly_Burglar();
+                    case 136:
+                        return BRELoneEnemyEvent.Lone_Friendly_Rogue();
+                    case 137:
+                        return BRELoneEnemyEvent.Lone_Friendly_Acrobat();
+                    case 138:
+                        return BRELoneEnemyEvent.Lone_Friendly_Thief();
+                    case 139:
+                        return BRELoneEnemyEvent.Lone_Friendly_Assassin();
+                    case 140:
+                        return BRELoneEnemyEvent.Lone_Friendly_Monk();
+                    case 141:
+                        return BRELoneEnemyEvent.Lone_Friendly_Archer();
+                    case 142:
+                        return BRELoneEnemyEvent.Lone_Friendly_Ranger();
+                    case 143:
+                        return BRELoneEnemyEvent.Lone_Friendly_Barbarian();
+                    case 144:
+                        return BRELoneEnemyEvent.Lone_Friendly_Warrior();
+                    case 145:
+                        return BRELoneEnemyEvent.Lone_Friendly_Knight();
                     default:
                         return "";
                 }
