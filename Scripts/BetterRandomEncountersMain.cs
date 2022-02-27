@@ -180,6 +180,12 @@ namespace BetterRandomEncounters
 
             if (custObject.HasMoreText)
             {
+                if (custObject.HasAddChoiceBox)
+                {
+                    BREWork.PopTextWithChoice(custObject.AdditionalText, custObject.EventName);
+                    return;
+                }
+
                 BREWork.PopRegularText(custObject.AdditionalText);
                 custObject.HasMoreText = false;
                 return;

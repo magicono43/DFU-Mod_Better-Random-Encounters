@@ -22,10 +22,6 @@ using DaggerfallWorkshop.Game.Serialization;
 
 namespace BetterRandomEncounters
 {
-    /// <summary>
-    /// Helper behaviour to pass information between GameObjects and Quest system.
-    /// Used to trigger resource events in quest systems like ClickedNpc, InjuredFoe, KilledFoe, etc.
-    /// </summary>
     public class BRECustomObject : MonoBehaviour
     {
         #region Fields
@@ -37,10 +33,13 @@ namespace BetterRandomEncounters
         bool hasGreeting = false;
         bool greetingShown = false;
         bool hasMoreText = false;
+        bool hasAddChoiceBox = false;
         bool hasAggroText = false;
         bool aggroTextShown = false;
         ulong linkedAlliesID = 0;
         bool isGangLeader = false;
+        string eventName = "";
+        bool inventoryPopulated = false;
         bool readyToSpawn = false;
 
         #endregion
@@ -83,6 +82,12 @@ namespace BetterRandomEncounters
             set { hasMoreText = value; }
         }
 
+        public bool HasAddChoiceBox
+        {
+            get { return hasAddChoiceBox; }
+            set { hasAddChoiceBox = value; }
+        }
+
         public bool HasAggroText
         {
             get { return hasAggroText; }
@@ -105,6 +110,18 @@ namespace BetterRandomEncounters
         {
             get { return isGangLeader; }
             set { isGangLeader = value; }
+        }
+
+        public string EventName
+        {
+            get { return eventName; }
+            set { eventName = value; }
+        }
+
+        public bool InventoryPopulated
+        {
+            get { return inventoryPopulated; }
+            set { inventoryPopulated = value; }
         }
 
         public bool ReadyToSpawn

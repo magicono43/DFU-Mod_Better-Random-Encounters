@@ -30,7 +30,7 @@ using System.Linq;
 
 namespace BetterRandomEncounters
 {
-    public class BREWork : MonoBehaviour
+    public partial class BREWork : MonoBehaviour
     {
         private bool gameStarted = false;
         public int latestEncounterIndex = 0;
@@ -38,6 +38,8 @@ namespace BetterRandomEncounters
         PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
         GameObject player = GameManager.Instance.PlayerObject;
         GameObject[] mobile;
+
+        public static string choiceBoxEventName = "";
 
         TextFile.Token[] pendingEventInitialTokens = null;
         public bool tryEventPlacement = false;
@@ -487,7 +489,7 @@ namespace BetterRandomEncounters
 
         public void CreateGoodDayEvent(MobileTypes enemyType)
         {
-            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            int eventScale = PickOneOf(3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
 
             if (eventScale == 0)
             {
@@ -516,6 +518,7 @@ namespace BetterRandomEncounters
                 }
             }
             else if (eventScale == 2)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
                 {
                     LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
@@ -526,8 +529,14 @@ namespace BetterRandomEncounters
                     LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
                 }
-            else if (eventScale == 3)
+            }
+            else if (eventScale == 3) // Going to have to do work to see how the final implementation of these will work in terms of event choices, also enemy descrim. or not.
+            {
+                if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
+
+                Traveling_Alchemist_Solo();
                 return;
+            }
         }
 
         public void CreateBadDayEvent(MobileTypes enemyType)
@@ -548,6 +557,7 @@ namespace BetterRandomEncounters
                 }
             }
             else if (eventScale == 1)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
                 {
                     SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
@@ -558,7 +568,9 @@ namespace BetterRandomEncounters
                     SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
                     CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
                 }
+            }
             else if (eventScale == 2)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
                 {
                     LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
@@ -569,13 +581,14 @@ namespace BetterRandomEncounters
                     LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
                     CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
                 }
+            }
             else if (eventScale == 3)
                 return;
         }
 
         public void CreateGoodNightEvent(MobileTypes enemyType)
         {
-            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            int eventScale = PickOneOf(3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
 
             if (eventScale == 0)
             {
@@ -591,6 +604,7 @@ namespace BetterRandomEncounters
                 }
             }
             else if (eventScale == 1)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 133, 134, 135, 136, 138, 139, 142, 143 }))
                 {
                     SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
@@ -601,7 +615,9 @@ namespace BetterRandomEncounters
                     SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
                 }
+            }
             else if (eventScale == 2)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 133, 134, 135, 136, 138, 139, 142, 143 }))
                 {
                     LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
@@ -612,8 +628,14 @@ namespace BetterRandomEncounters
                     LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
                 }
+            }
             else if (eventScale == 3)
+            {
+                if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
+
+                Traveling_Alchemist_Solo();
                 return;
+            }
         }
 
         public void CreateBadNightEvent(MobileTypes enemyType)
@@ -634,6 +656,7 @@ namespace BetterRandomEncounters
                 }
             }
             else if (eventScale == 1)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 133, 134, 135, 136, 138, 139, 142, 143 }))
                 {
                     SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
@@ -644,7 +667,9 @@ namespace BetterRandomEncounters
                     SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
                     CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
                 }
+            }
             else if (eventScale == 2)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 133, 134, 135, 136, 138, 139, 142, 143 }))
                 {
                     LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
@@ -655,13 +680,14 @@ namespace BetterRandomEncounters
                     LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
                     CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
                 }
+            }
             else if (eventScale == 3)
                 return;
         }
 
         public void CreateGoodInteriorEvent(MobileTypes enemyType)
         {
-            int eventScale = PickOneOf(0, 1, 2, 3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
+            int eventScale = PickOneOf(3); // 0 = Lone Enemy, 1 = Small group of enemies, 2 = Large group of enemies, 3 = Special.
 
             if (eventScale == 0)
             {
@@ -677,6 +703,7 @@ namespace BetterRandomEncounters
                 }
             }
             else if (eventScale == 1)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
                 {
                     SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
@@ -687,7 +714,9 @@ namespace BetterRandomEncounters
                     SmallGroupEncounterTextInitiate("Small_Group_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateSmallEnemyGroup("Small_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
                 }
+            }
             else if (eventScale == 2)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 28, 30, 32, 33, 128, 129, 130, 131, 132, 134, 137, 140, 141, 142, 143, 144, 145 }))
                 {
                     LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
@@ -698,8 +727,14 @@ namespace BetterRandomEncounters
                     LargeGroupEncounterTextInitiate("Large_Group_Friendly", enemyType.ToString(), (int)enemyType);
                     CreateLargeEnemyGroup("Large_Group_Friendly", enemyType.ToString(), enemyType, MobileReactions.Passive, true, false, false);
                 }
+            }
             else if (eventScale == 3)
+            {
+                if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
+
+                Traveling_Alchemist_Solo();
                 return;
+            }
         }
 
         public void CreateBadInteriorEvent(MobileTypes enemyType)
@@ -720,6 +755,7 @@ namespace BetterRandomEncounters
                 }
             }
             else if (eventScale == 1)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
                 {
                     SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
@@ -730,7 +766,9 @@ namespace BetterRandomEncounters
                     SmallGroupEncounterTextInitiate("Small_Group_Hostile", enemyType.ToString(), (int)enemyType);
                     CreateSmallEnemyGroup("Small_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
                 }
+            }
             else if (eventScale == 2)
+            {
                 if (CheckArrayForValue((int)enemyType, new int[] { 128, 129, 130, 131, 132, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145 }))
                 {
                     LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
@@ -741,6 +779,7 @@ namespace BetterRandomEncounters
                     LargeGroupEncounterTextInitiate("Large_Group_Hostile", enemyType.ToString(), (int)enemyType);
                     CreateLargeEnemyGroup("Large_Group_Hostile", enemyType.ToString(), enemyType, MobileReactions.Hostile, false, false, false);
                 }
+            }
             else if (eventScale == 3)
                 return;
         }
@@ -1066,6 +1105,40 @@ namespace BetterRandomEncounters
             textBox.SetTextTokens(tokens);
             textBox.ClickAnywhereToClose = true;
             textBox.Show();
+        }
+
+        public static void PopTextWithChoice(TextFile.Token[] tokens, string eventName)
+        {
+            if (tokens[0].text == "") { return; }
+
+            choiceBoxEventName = eventName;
+
+            DaggerfallMessageBox textBox = new DaggerfallMessageBox(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow);
+            textBox.SetTextTokens(tokens);
+            textBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.Yes);
+            textBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.No);
+            textBox.OnButtonClick += DoEventChoice_OnButtonClick;
+            textBox.Show();
+        }
+
+        public static void DoEventChoice_OnButtonClick(DaggerfallMessageBox sender, DaggerfallMessageBox.MessageBoxButtons messageBoxButton)
+        {
+            if (messageBoxButton == DaggerfallMessageBox.MessageBoxButtons.Yes)
+            {
+                switch (choiceBoxEventName)
+                {
+                    case "Traveling_Alchemist_Solo": Traveling_Alchemist_Solo_OnYesButton(sender); break; // For testing, make it so this is the only event that can happen for now.
+                    default: break;
+                }
+            }
+
+            if (messageBoxButton == DaggerfallMessageBox.MessageBoxButtons.No)
+            {
+
+            }
+
+            choiceBoxEventName = "";
+            sender.CloseWindow();
         }
 
         public static int PickOneOf(params int[] values) // Pango provided assistance in making this much cleaner way of doing the random value choice part, awesome.
