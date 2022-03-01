@@ -1107,7 +1107,7 @@ namespace BetterRandomEncounters
             textBox.Show();
         }
 
-        public static void PopTextWithChoice(TextFile.Token[] tokens, string eventName)
+        public static void PopTextWithChoice(TextFile.Token[] tokens, string eventName, bool lootPileChoice = false)
         {
             if (tokens[0].text == "") { return; }
 
@@ -1117,7 +1117,10 @@ namespace BetterRandomEncounters
             textBox.SetTextTokens(tokens);
             textBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.Yes);
             textBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.No);
-            textBox.OnButtonClick += DoEventChoice_OnButtonClick;
+            if (lootPileChoice)
+                textBox.OnButtonClick += DoLootPileChoice_OnButtonClick;
+            else
+                textBox.OnButtonClick += DoEventChoice_OnButtonClick;
             textBox.Show();
         }
 
@@ -1135,6 +1138,30 @@ namespace BetterRandomEncounters
             if (messageBoxButton == DaggerfallMessageBox.MessageBoxButtons.No)
             {
 
+            }
+
+            choiceBoxEventName = "";
+            sender.CloseWindow();
+        }
+
+        public static void DoLootPileChoice_OnButtonClick(DaggerfallMessageBox sender, DaggerfallMessageBox.MessageBoxButtons messageBoxButton)
+        {
+            if (messageBoxButton == DaggerfallMessageBox.MessageBoxButtons.Yes)
+            {
+                switch (choiceBoxEventName)
+                {
+                    case "Traveling_Alchemist_Solo": Traveling_Alchemist_Inventory_Choice_OnYesButton(sender); break;
+                    default: break;
+                }
+            }
+
+            if (messageBoxButton == DaggerfallMessageBox.MessageBoxButtons.No)
+            {
+                switch (choiceBoxEventName)
+                {
+                    case "Traveling_Alchemist_Solo": Traveling_Alchemist_Inventory_Choice_OnNoButton(sender); break;
+                    default: break;
+                }
             }
 
             choiceBoxEventName = "";
