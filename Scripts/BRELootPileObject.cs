@@ -28,6 +28,7 @@ namespace BetterRandomEncounters
 
         TextFile.Token[] firstOpenText;
         TextFile.Token[] moreOpenText;
+        TextFile.Token[] destroyedItemsText;
         TextFile.Token[] choiceText;
 
         bool hasFirstOpenText = false;
@@ -38,6 +39,8 @@ namespace BetterRandomEncounters
         bool isLocked = false;
         bool isTrapped = false;
         bool doesTrapReset = false;
+        bool itemsDestroyed = false;
+        bool destroyedTextShown = false;
 
         EnemyEntity attachedEnemy = null;
 
@@ -61,6 +64,12 @@ namespace BetterRandomEncounters
         {
             get { return choiceText; }
             set { choiceText = value; }
+        }
+
+        public TextFile.Token[] DestroyedItemsText
+        {
+            get { return destroyedItemsText; }
+            set { destroyedItemsText = value; }
         }
 
         public bool HasFirstOpenText
@@ -111,6 +120,18 @@ namespace BetterRandomEncounters
             set { doesTrapReset = value; }
         }
 
+        public bool ItemsDestroyed
+        {
+            get { return itemsDestroyed; }
+            set { itemsDestroyed = value; }
+        }
+
+        public bool DestroyedTextShown
+        {
+            get { return destroyedTextShown; }
+            set { destroyedTextShown = value; }
+        }
+
         public EnemyEntity AttachedEnemy
         {
             get { return attachedEnemy; }
@@ -129,11 +150,11 @@ namespace BetterRandomEncounters
 
         private void Update()
         {
-            if (SaveLoadManager.Instance.LoadInProgress)
+            /*if (SaveLoadManager.Instance.LoadInProgress)
                 return;
 
             if (GameManager.IsGamePaused)
-                return;
+                return;*/
 
 
         }

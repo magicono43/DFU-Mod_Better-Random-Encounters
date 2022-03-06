@@ -223,6 +223,13 @@ namespace BetterRandomEncounters
                 return;
             }
 
+            if (!lootPileObj.DestroyedTextShown && lootPileObj.ItemsDestroyed)
+            {
+                BREWork.PopRegularText(lootPileObj.DestroyedItemsText);
+                lootPileObj.DestroyedTextShown = true;
+                return;
+            }
+
             if (lootPileObj.HasChoices)
             {
                 BREWork.PopTextWithChoice(lootPileObj.ChoiceText, lootPileObj.EventName, true);

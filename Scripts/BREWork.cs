@@ -35,8 +35,8 @@ namespace BetterRandomEncounters
         private bool gameStarted = false;
         public int latestEncounterIndex = 0;
         private uint lastGameMinutes = 0;         // Being tracked in order to perform updates based on changes in the current game minute
-        PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
-        GameObject player = GameManager.Instance.PlayerObject;
+        PlayerEntity playerEnt = GameManager.Instance.PlayerEntity;
+        GameObject playerObj = GameManager.Instance.PlayerObject;
         GameObject[] mobile;
 
         public static string choiceBoxEventName = "";
@@ -83,7 +83,7 @@ namespace BetterRandomEncounters
             if (GameManager.IsGamePaused)
                 return;
 
-            if (playerEntity.CurrentHealth <= 0)
+            if (playerEnt.CurrentHealth <= 0)
                 return;
 
             uint gameMinutes = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToClassicDaggerfallTime();
@@ -92,7 +92,7 @@ namespace BetterRandomEncounters
                 throw new Exception(string.Format("lastGameMinutes {0} greater than gameMinutes: {1}", lastGameMinutes, gameMinutes));
             }
 
-            if (!playerEntity.PreventEnemySpawns)
+            if (!playerEnt.PreventEnemySpawns)
             {
                 if (GameManager.Instance.EntityEffectBroker.SyntheticTimeIncrease) { lastGameMinutes = gameMinutes; }
 
@@ -135,8 +135,8 @@ namespace BetterRandomEncounters
             lastGameMinutes = gameMinutes;
 
             // Allow enemy spawns again if they have been disabled
-            if (playerEntity.PreventEnemySpawns)
-                playerEntity.PreventEnemySpawns = false;
+            if (playerEnt.PreventEnemySpawns)
+                playerEnt.PreventEnemySpawns = false;
         }
 
         public bool ModdedEventSpawnCheck(uint Minutes)
@@ -788,7 +788,7 @@ namespace BetterRandomEncounters
         {
             if (pendingEventEnemies != null && pendingEventEnemies.Count >= 1) { return; }
 
-            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(playerObj.transform.position + playerObj.transform.forward * 2, enemyType, 1, enemyReact);
             mobile[0].AddComponent<BRECustomObject>();
             BRECustomObject bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
 
@@ -821,7 +821,7 @@ namespace BetterRandomEncounters
 
             ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
             int size = UnityEngine.Random.Range(3, 5);
-            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(playerObj.transform.position + playerObj.transform.forward * 2, enemyType, 1, enemyReact);
             DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
             EnemyEntity entity = behaviour.Entity as EnemyEntity;
             MobileTeams team = entity.Team;
@@ -844,7 +844,7 @@ namespace BetterRandomEncounters
                 }
                 else // For the followers of the leader
                 {
-                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
+                    mobile = GameObjectHelper.CreateFoeGameObjects(playerObj.transform.position + playerObj.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
                     mobile[0].AddComponent<BRECustomObject>();
                     bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
                     behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
@@ -882,7 +882,7 @@ namespace BetterRandomEncounters
 
             ulong alliedID = DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.ToSeconds();
             int size = UnityEngine.Random.Range(6, 10);
-            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, enemyType, 1, enemyReact);
+            GameObject[] mobile = GameObjectHelper.CreateFoeGameObjects(playerObj.transform.position + playerObj.transform.forward * 2, enemyType, 1, enemyReact);
             DaggerfallEntityBehaviour behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
             EnemyEntity entity = behaviour.Entity as EnemyEntity;
             MobileTeams team = entity.Team;
@@ -905,7 +905,7 @@ namespace BetterRandomEncounters
                 }
                 else // For the followers of the leader
                 {
-                    mobile = GameObjectHelper.CreateFoeGameObjects(player.transform.position + player.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
+                    mobile = GameObjectHelper.CreateFoeGameObjects(playerObj.transform.position + playerObj.transform.forward * 2, ChooseEnemyFollowers(enemyType), 1, enemyReact);
                     mobile[0].AddComponent<BRECustomObject>();
                     bRECustomObject = mobile[0].GetComponent<BRECustomObject>();
                     behaviour = mobile[0].GetComponent<DaggerfallEntityBehaviour>();
