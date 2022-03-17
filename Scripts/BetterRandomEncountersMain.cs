@@ -198,7 +198,7 @@ namespace BetterRandomEncounters
                 // Check if close enough to activate and that corpse has items
                 case LootContainerTypes.CorpseMarker:
                     if (hit.distance > PlayerActivate.CorpseActivationDistance) return;
-                    else if (loot.Items.Count == 0) return;
+                    else if (loot.Items.Count == 0) break;
                     else if (loot.Items.Count == 1 && loot.Items.Contains(ItemGroups.Weapons, (int)Weapons.Arrow)) return;
                     break;
                 default: return;
@@ -207,8 +207,8 @@ namespace BetterRandomEncounters
             BRELootAction(lootPileObj);
 
             // Open inventory window with activated loot container as remote target (if we fall through to here)
-            DaggerfallUI.Instance.InventoryWindow.LootTarget = loot;
-            DaggerfallUI.PostMessage(DaggerfallUIMessages.dfuiOpenInventoryWindow);
+            //DaggerfallUI.Instance.InventoryWindow.LootTarget = loot;
+            //DaggerfallUI.PostMessage(DaggerfallUIMessages.dfuiOpenInventoryWindow);
         }
 
         public static void BRELootAction(BRELootPileObject lootPileObj)
@@ -227,6 +227,7 @@ namespace BetterRandomEncounters
             {
                 BREWork.PopRegularText(lootPileObj.DestroyedItemsText);
                 lootPileObj.DestroyedTextShown = true;
+                Destroy(lootPileObj);
                 return;
             }
 

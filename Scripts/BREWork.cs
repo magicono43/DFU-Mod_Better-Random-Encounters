@@ -1162,10 +1162,10 @@ namespace BetterRandomEncounters
                     case "Traveling_Alchemist_Solo": Traveling_Alchemist_Inventory_Choice_OnNoButton(sender); break;
                     default: break;
                 }
+                sender.CloseWindow();
             }
 
             choiceBoxEventName = "";
-            sender.CloseWindow();
         }
 
         public static int PickOneOf(params int[] values) // Pango provided assistance in making this much cleaner way of doing the random value choice part, awesome.

@@ -106,12 +106,10 @@ namespace BetterRandomEncounters
             }
 
             sender.CloseWindow();
-            //DaggerfallTradeWindow tradeWindow = (DaggerfallTradeWindow)UIWindowFactory.GetInstanceWithArgs(UIWindowType.Trade, new object[] { DaggerfallUI.UIManager, null, DaggerfallTradeWindow.WindowModes.Buy, null });
-            //BRETradeWindow tradeWindow = (BRETradeWindow)UIWindowFactory.GetInstanceWithArgs(UIWindowType.Trade, new object[] { DaggerfallUI.UIManager, null, BRETradeWindow.WindowModes.Buy, null });
             BRETradeWindow tradeWindow = new BRETradeWindow(DaggerfallUI.UIManager, null, BRETradeWindow.WindowModes.Buy, null);
-            tradeWindow.MerchantItems = tempShopItemHolder.Items; // Tomorrow, more testing and fix the window problem, also I failed magic rune disarm and no spell happened nor text to say it.
+            tradeWindow.MerchantItems = tempShopItemHolder.Items;
             tradeWindow.OnClose += Traveling_Alchemist_OnCloseTrade;
-            DaggerfallUI.UIManager.PushWindow(tradeWindow); // May want to create custom trade window here, but will have to see if necessary.
+            DaggerfallUI.UIManager.PushWindow(tradeWindow);
         }
 
         public static void Traveling_Alchemist_OnCloseTrade()
@@ -119,7 +117,7 @@ namespace BetterRandomEncounters
             if (!GameManager.IsGamePaused)
             {
                 eventShopOwner.Items.TransferAll(tempShopItemHolder.Items);
-                Destroy(tempShopItemHolder); // Tomorrow, go through this sequence of processes one by one, then test in-game if all seems right, and finish other parts where needed.
+                Destroy(tempShopItemHolder);
                 tempShopItemHolder = null;
                 eventShopOwner = null;
             }
@@ -138,23 +136,26 @@ namespace BetterRandomEncounters
             if (alchemist.CareerIndex == (int)ClassCareers.Mage || alchemist.CareerIndex == (int)ClassCareers.Sorcerer) // Magic rune that throws some elemental spell or maybe even summon atronach
             {
                 bRELootPileObject.ChoiceText = DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                "As you go to unlatch the pouch, you notice what looks like a magical rune inscribed onto the clasp. You can only imagine it's a magical trap of some sort" +
-                "(likely as an attempt to discourage behavior such as this.) Do you attempt disarming it to get to the contents of the pouch, at risk of triggering the trap?" +
-                "(Odds Determined By: Thaumaturgy, Destruction, Lockpicking, and of course, Luck");
+                "As you go to unlatch the pouch, you notice what looks like a magical rune inscribed onto the clasp. You can only imagine it's a magical trap of some sort",
+                "(likely as an attempt to discourage behavior such as this.) ",
+                "Do you attempt disarming it to get to the contents of the pouch, at risk of triggering the trap?", "",
+                "(Odds Determined By: Thaumaturgy, Destruction, Lockpicking, and of course, Luck)");
             }
             else if (alchemist.CareerIndex == (int)ClassCareers.Healer) // Cursed glyph that spawns a guardian wraith
             {
                 bRELootPileObject.ChoiceText = DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                "As you go to unlatch the pouch, you notice what looks like a strange glyph engraved onto the clasp. You can only imagine it's a magical trap of some sort" +
-                "(likely as an attempt to discourage behavior such as this.) Do you attempt disarming it to get to the contents of the pouch, at risk of triggering the trap?" +
-                "(Odds Determined By: Mysticism, Restoration, Lockpicking, and of course, Luck");
+                "As you go to unlatch the pouch, you notice what looks like a strange glyph engraved onto the clasp. You can only imagine it's a magical trap of some sort",
+                "(likely as an attempt to discourage behavior such as this.) ",
+                "Do you attempt disarming it to get to the contents of the pouch, at risk of triggering the trap?", "",
+                "(Odds Determined By: Mysticism, Restoration, Lockpicking, and of course, Luck)");
             }
             else if (alchemist.CareerIndex == (int)ClassCareers.Nightblade) // Poison Injector or Pressurized Disease Bomb
             {
                 bRELootPileObject.ChoiceText = DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                "As you go to unlatch the pouch, you notice an abnormal elastic tension when putting any pressure on the clasp. Perhaps a sprint-loaded trap of some kind" +
-                "(likely as an attempt to discourage behavior such as this.) Do you attempt disarming it to get to the contents of the pouch, at risk of triggering the trap?" +
-                "(Odds Determined By: Lockpicking, Agility, Speed, and of course, Luck");
+                "As you go to unlatch the pouch, you notice an abnormal elastic tension when putting any pressure on the clasp. Perhaps a sprint-loaded trap of some kind",
+                "(likely as an attempt to discourage behavior such as this.) ",
+                "Do you attempt disarming it to get to the contents of the pouch, at risk of triggering the trap?", "",
+                "(Odds Determined By: Lockpicking, Agility, Speed, and of course, Luck)");
             }
             else { bRELootPileObject.ChoiceText = DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter, ""); }
         }
@@ -192,34 +193,38 @@ namespace BetterRandomEncounters
 
             if (alchemist.CareerIndex == (int)ClassCareers.Mage || alchemist.CareerIndex == (int)ClassCareers.Sorcerer) // Magic rune that throws some elemental spell or maybe even summon atronach
             {
-                // Tomorrow, work on the actual function of the traps when they trigger, also what rolls happen and such for them to fail or succeed and such.
                 if (Dice100.SuccessRoll(Mathf.Clamp(-35 + (thau) + (dest / 3) + (lockP / 3) + (luck / 3), 0, 90)))
                 {
-                    PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                        "Either through skill or dumb luck (or both), you have dispelled the dangerous rune trap." +
-                        "You may now plunder the pack's contents freely.")); // Tomorrow, finally do some in-game testing and go from there whatever pops up. Also figure out solutions for window thing.
+                    PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter, // Tomorrow, Increase prices of potions from traveling alchemists more than currently.
+                        "Either through skill or dumb luck (or both), you have dispelled the dangerous rune trap.", // Weird bug when multiple alchemist loot objects in one scene, buggy.
+                        "You may now plunder the pack's contents freely."));
                 }
                 else
                 {
                     DaggerfallConnect.Save.SpellRecord.SpellRecordData spell;
                     if (GameManager.Instance.EntityEffectBroker.GetClassicSpellRecord(31, out spell)) // ID 31 is apparently for the Lightning spell, will use this for now and see how it goes.
                     {
-                        // Create effect bundle settings from classic spell
-                        EffectBundleSettings bundleSettings;
-                        if (GameManager.Instance.EntityEffectBroker.ClassicSpellRecordDataToEffectBundleSettings(spell, BundleTypes.Spell, out bundleSettings))
+                        int i = 0;
+                        while (i < 2) // Cast the spell multiple times for more destructive effect. (otherwise just cast God's Fire if this is not a good way to do it.)
                         {
-                            // Spell is fired at player, at strength of player level, from triggering object
-                            DaggerfallMissile missile = GameManager.Instance.PlayerEffectManager.InstantiateSpellMissile(bundleSettings.ElementType);
-                            missile.Payload = new EntityEffectBundle(bundleSettings);
-                            Vector3 customAimPosition = loot.transform.position;
-                            customAimPosition.y += 40 * MeshReader.GlobalScale;
-                            missile.CustomAimPosition = customAimPosition;
-                            missile.CustomAimDirection = Vector3.Normalize(GameManager.Instance.PlayerObject.transform.position - loot.transform.position);
+                            // Create effect bundle settings from classic spell
+                            EffectBundleSettings bundleSettings;
+                            if (GameManager.Instance.EntityEffectBroker.ClassicSpellRecordDataToEffectBundleSettings(spell, BundleTypes.Spell, out bundleSettings))
+                            {
+                                // Spell is fired at player, at strength of player level, from triggering object
+                                DaggerfallMissile missile = GameManager.Instance.PlayerEffectManager.InstantiateSpellMissile(bundleSettings.ElementType);
+                                missile.Payload = new EntityEffectBundle(bundleSettings, alchemist.EntityBehaviour);
+                                Vector3 customAimPosition = loot.transform.position;
+                                customAimPosition.y += 40 * MeshReader.GlobalScale;
+                                missile.CustomAimPosition = customAimPosition;
+                                missile.CustomAimDirection = Vector3.Normalize(GameManager.Instance.PlayerObject.transform.position - loot.transform.position);
+                            }
+                            i++;
                         }
                     }
 
                     PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                        "As you attempt to disarm the rune, suddenly, a massive jolt of electric energy is emitted from the magical rune." +
+                        "As you attempt to disarm the rune, suddenly, a massive jolt of electric energy is emitted from the magical rune.",
                         "The force is great enough to throw you backward onto your back, knocking the wind out of your chest."));
                     alchCorpseObject.ItemsDestroyed = true;
                     loot.Items.Clear(); // Destroys items within referenced loot-pile.
@@ -230,7 +235,7 @@ namespace BetterRandomEncounters
                 if (Dice100.SuccessRoll(Mathf.Clamp(-35 + (myst) + (rest / 3) + (lockP / 3) + (luck / 3), 0, 90)))
                 {
                     PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                        "Either through skill or dumb luck (or both), you have disarmed the glyph trap." +
+                        "Either through skill or dumb luck (or both), you have disarmed the glyph trap.",
                         "You may now plunder the pack's contents freely."));
                 }
                 else
@@ -239,7 +244,7 @@ namespace BetterRandomEncounters
                     wraith[0].SetActive(true);
 
                     PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                        "As you attempt to disarm the glyph, suddenly, you are momentarily blinded by a flash of light and thrown back a few steps." +
+                        "As you attempt to disarm the glyph, suddenly, you are momentarily blinded by a flash of light and thrown back a few steps.",
                         "When your vision clears you realize an enraged apparition is flying straight for you!"));
                     alchCorpseObject.ItemsDestroyed = true;
                     loot.Items.Clear(); // Destroys items within referenced loot-pile.
@@ -250,7 +255,7 @@ namespace BetterRandomEncounters
                 if (Dice100.SuccessRoll(Mathf.Clamp(-35 + (lockP) + (agil/2) + (sped/4) + (luck/4), 0, 90)))
                 {
                     PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                        "Either through skill or dumb luck (or both), you have disarmed the devious trap." +
+                        "Either through skill or dumb luck (or both), you have disarmed the devious trap.",
                         "You may now plunder the pack's contents freely."));
                 }
                 else
@@ -263,9 +268,10 @@ namespace BetterRandomEncounters
                             EntityEffectBundle bundle = effectManager.CreatePoison((Poisons)Random.Range(128, 136));
                             effectManager.AssignBundle(bundle, AssignBundleFlags.BypassSavingThrows);
                         }
+
                         PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                            "As you fiddle with the mechanism, suddenly, you feel a spring engage and at the same time feel a sharp pain in your wrist." +
-                            "You reflexivly retract back, and realize the pain was from a small spring loaded needle of some sort, and it looks" +
+                            "As you fiddle with the mechanism, suddenly, you feel a spring engage and at the same time feel a sharp pain in your wrist.",
+                            "You reflexivly retract back, and realize the pain was from a small spring loaded needle of some sort, and it looks",
                             "like it was coated in some strange liquid. That can't be good."));
                         player.DecreaseHealth(1);
                     }
@@ -281,15 +287,15 @@ namespace BetterRandomEncounters
                         }
 
                         PopRegularText(DaggerfallUnity.Instance.TextProvider.CreateTokens(TextFile.Formatting.JustifyCenter,
-                            "As you fiddle with the mechanism, suddenly, you feel a spring engage and hear a violent hissing and rush of invisible gas." +
-                            "Before you can react you take a deep breath of the foul smelling substance. As you retract you feel slightly dizzy, but the" +
+                            "As you fiddle with the mechanism, suddenly, you feel a spring engage and hear a violent hissing and rush of invisible gas.",
+                            "Before you can react you take a deep breath of the foul smelling substance. As you retract you feel slightly dizzy, but the",
                             "sensation quickly dissipates, but you have a hunch you may not feel so fine once whatever was in that gas-bomb starts to take effect."));
                     }
                     alchCorpseObject.ItemsDestroyed = true;
                     loot.Items.Clear(); // Destroys items within referenced loot-pile.
                 }
             }
-            alchCorpseObject.IsTrapped = false; // I think main thing I need to figure out next is how to close the inventory window if the dialogue is closed, will have to test and see what happens first.
+            alchCorpseObject.IsTrapped = false;
         }
 
         public static void Traveling_Alchemist_Inventory_Choice_OnNoButton(DaggerfallMessageBox sender)
